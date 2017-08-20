@@ -5,9 +5,7 @@ import (
 	"os"
 
 	"github.com/FINTprosjektet/fint-consumer/branches"
-	"github.com/FINTprosjektet/fint-consumer/classes"
 	"github.com/FINTprosjektet/fint-consumer/generate"
-	"github.com/FINTprosjektet/fint-consumer/namespaces"
 	"github.com/FINTprosjektet/fint-consumer/packages"
 	"github.com/FINTprosjektet/fint-consumer/tags"
 	"github.com/codegangsta/cli"
@@ -32,7 +30,7 @@ var Commands = []cli.Command{
 		Name:   "generate",
 		Usage:  "generates consumer code",
 		Action: generate.CmdGenerate,
-		Flags: []cli.Flag{},
+		Flags:  []cli.Flag{},
 	},
 	{
 		Name:   "listPackages",
