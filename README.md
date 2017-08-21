@@ -3,14 +3,36 @@
 
 
 ## Description
-Generates `Java` and `C#` models from EA XMI export. This utility is mainly for internal FINT use, but if you 
-find it usefull, please use it!
+Generates `Java` consumer code from EA XMI export. This utility is mainly for internal FINT use, but if you find it usefull, please use it!
 
 ## Usage
 
 ```
 $ fint-consumer
+NAME:
+   fint-consumer - Generates consumer code from EA XMI export. This utility is mainly for internal FINT use, but if you find it usefull, please use it!
 
+USAGE:
+   fint-consumer [global options] command [command options] [arguments...]
+
+VERSION:
+   1.0.0
+
+AUTHOR:
+   FINTProsjektet
+
+COMMANDS:
+     generate      generates consumer code
+     listPackages  list Java packages
+     listTags      list tags
+     listBranches  list branches
+     help, h       Shows a list of commands or help for one command
+
+GLOBAL OPTIONS:
+   --tag value, -t value  the tag (version) of the model to generate (default: "latest")
+   --force, -f            force downloading XMI for GitHub.
+   --help, -h             show help
+   --version, -v          print the version
 ```
 
 The downloaded XMI file is put in the `$HOME/.fint-consumer/.cache`. If you don't use the 
