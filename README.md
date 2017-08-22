@@ -46,7 +46,7 @@ Precompiled binaries can be downloaded [here](https://github.com/FINTprosjektet/
 
 * Download for your os
 * Rename to fint-consumer
-* Copy to where ever you want it.
+* Copy to directory in your `PATH`
 
 *Example macOS*
 ```shell
