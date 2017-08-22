@@ -51,7 +51,8 @@ Precompiled binaries can be downloaded [here](https://github.com/FINTprosjektet/
 *Example macOS*
 ```shell
 $ mv fint-consumer-darwin fint-consumer
-$ mv fint-consumer /usr/local/bin
+$ chmod +x fint-consumer
+$ sudo mv fint-consumer /usr/local/bin
 ```
 
 ### Go
