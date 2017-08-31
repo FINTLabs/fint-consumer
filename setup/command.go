@@ -30,7 +30,7 @@ func CmdSetupConsumer(c *cli.Context) {
 	verfifyParameter(name, "Name parameter missing!")
 
 	pkg := c.String("package")
-	verfifyParameter(pkg, "Package parameter missing!")
+	//verfifyParameter(pkg, "Package parameter missing!")
 
 	component := c.String("component")
 	verfifyParameter(component, "Component parameter missing!")
@@ -80,6 +80,8 @@ func updateConfigFiles(name string) {
 func addModels(component string, pkg string, name string) {
 	src := fmt.Sprintf("%s/%s/%s/%s", utils.GetTempDirectory(), config.BASE_PATH, component, pkg)
 	dest := fmt.Sprintf("./%s/src/main/java/no/fint/consumer/models/", getConsumerName(name))
+	fmt.Println(src)
+	fmt.Printf(dest)
 	os.RemoveAll(dest)
 	err := utils.CopyDir(src, dest)
 	if err != nil {
