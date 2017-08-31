@@ -9,6 +9,7 @@ import (
 	"github.com/FINTprosjektet/fint-consumer/packages"
 	"github.com/FINTprosjektet/fint-consumer/tags"
 	"github.com/codegangsta/cli"
+	"github.com/FINTprosjektet/fint-consumer/setup"
 )
 
 var GlobalFlags = []cli.Flag{
@@ -49,6 +50,29 @@ var Commands = []cli.Command{
 		Usage:  "list branches",
 		Action: branches.CmdListBranches,
 		Flags:  []cli.Flag{},
+	},
+	{
+		Name:   "setup",
+		Usage:  "setup a consumer project",
+		Action: setup.CmdSetupConsumer,
+		Flags:  []cli.Flag{
+			cli.StringFlag{
+				Name:   "name, n",
+				Usage:  "name of the consumer, e.g. personal",
+			},
+			cli.StringFlag{
+				Name:   "component, c",
+				Usage:  "component prefix, e.g. administrasjon",
+			},
+			cli.StringFlag{
+				Name:   "package, p",
+				Usage:  "the package you want to create the consumer for, e.g. kodeverk",
+			},
+			cli.BoolFlag{
+				Name: "includePerson",
+				Usage: "Include person model",
+			},
+		},
 	},
 }
 

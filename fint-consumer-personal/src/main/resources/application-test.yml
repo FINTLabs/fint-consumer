@@ -1,0 +1,13 @@
+fint:
+ events:
+  orgIds: mock.no
+  test-mode: true
+  queue-endpoint-enabled: true
+
+ audit:
+  test-mode: true
+
+ relations:
+   force-https: false
+
+link-mapper-base-url: http://localhost:8080

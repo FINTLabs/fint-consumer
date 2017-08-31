@@ -1,6 +1,6 @@
 package generate
 
-const CACHE_SERVICE_TEMPLATE = `package no.fint.consumer.{{ ToLower .Name  }};
+const CACHE_SERVICE_TEMPLATE = `package no.fint.consumer.models.{{ ToLower .Name  }};
 
 import lombok.extern.slf4j.Slf4j;
 import no.fint.cache.CacheService;
@@ -46,14 +46,20 @@ public class {{ .Name }}CacheService extends CacheService<FintResource<{{ .Name 
     }
 
     @Scheduled(initialDelayString = ConsumerProps.CACHE_INITIALDELAY_{{ ToUpper .Name }}, fixedRateString = ConsumerProps.CACHE_FIXEDRATE_{{ ToUpper .Name }})
-    public void populateCache() {
-        Arrays.stream(props.getOrgs()).forEach(orgId -> {
-            log.info("Populating {{ .Name }} cache for {}", orgId);
-            Event event = new Event(orgId, Constants.COMPONENT, {{ GetAction .Package}}.GET_ALL_{{ ToUpper .Name }}, Constants.CACHE_SERIVCE);
-            consumerEventUtil.send(event);
-        });
+    public void populateCacheAll() {
+        Arrays.stream(props.getOrgs()).forEach(this::populateCache);
     }
 
+    public void rebuildCache(String orgId) {
+		flush(orgId);
+		populateCache(orgId);
+	}
+
+    private void populateCache(String orgId) {
+		log.info("Populating {{ .Name }} cache for {}", orgId);
+        Event event = new Event(orgId, Constants.COMPONENT, {{ GetAction .Package}}.GET_ALL_{{ ToUpper .Name }}, Constants.CACHE_SERVICE);
+        consumerEventUtil.send(event);
+    }
     public Optional<FintResource<{{ .Name }}>> get{{ .Name }}(String orgId, String ***fixme***) {
         return getOne(orgId, (fintResource) -> fintResource.getResource().get***fixme***().getIdentifikatorverdi().equals(***fixme***));
     }

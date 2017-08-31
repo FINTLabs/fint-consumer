@@ -15,6 +15,6 @@ func CmdGenerate(c *cli.Context) {
 	}
 	force := c.GlobalBool("force")
 
-	generate(tag, force)
+	Generate(tag, force)
 
 }

@@ -5,7 +5,7 @@ go-github is a Go client library for accessing the [GitHub API v3][].
 **Documentation:** [![GoDoc](https://godoc.org/github.com/google/go-github/github?status.svg)](https://godoc.org/github.com/google/go-github/github)  
 **Mailing List:** [go-github@googlegroups.com](https://groups.google.com/group/go-github)  
 **Build Status:** [![Build Status](https://travis-ci.org/google/go-github.svg?branch=master)](https://travis-ci.org/google/go-github)  
-**Test Coverage:** [![Test Coverage](https://coveralls.io/repos/google/go-github/badge.svg?branch=master)](https://coveralls.io/r/google/go-github?branch=master) ([gocov report](https://drone.io/github.com/google/go-github/files/coverage.html))
+**Test Coverage:** [![Test Coverage](https://coveralls.io/repos/google/go-github/badge.svg?branch=master)](https://coveralls.io/r/google/go-github?branch=master)
 
 go-github requires Go version 1.7 or greater.
 
@@ -101,9 +101,11 @@ func main() {
 
 GitHub imposes a rate limit on all API clients. Unauthenticated clients are
 limited to 60 requests per hour, while authenticated clients can make up to
-5,000 requests per hour. To receive the higher rate limit when making calls
-that are not issued on behalf of a user, use the
-`UnauthenticatedRateLimitedTransport`.
+5,000 requests per hour. The Search API has a custom rate limit. Unauthenticated
+clients are limited to 10 requests per minute, while authenticated clients
+can make up to 30 requests per minute. To receive the higher rate limit when
+making calls that are not issued on behalf of a user,
+use `UnauthenticatedRateLimitedTransport`.
 
 The returned `Response.Rate` value contains the rate limit information
 from the most recent API call. If a recent enough response isn't

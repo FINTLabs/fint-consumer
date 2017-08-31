@@ -1,6 +1,6 @@
 package generate
 
-const CONTROLLER_TEMPLATE = `package no.fint.consumer.{{ ToLower .Name  }};
+const CONTROLLER_TEMPLATE = `package no.fint.consumer.models.{{ ToLower .Name  }};
 
 import com.google.common.collect.ImmutableMap;
 import lombok.extern.slf4j.Slf4j;
@@ -40,15 +40,25 @@ public class {{ .Name }}Controller {
     @Autowired
     private {{ .Name }}Assembler assembler;
 
-    @RequestMapping(value = "/last-updated", method = RequestMethod.GET)
-    public Map<String, String> getLastUpdated(@RequestHeader(value = HeaderConstants.ORG_ID, defaultValue = Constants.DEFAULT_HEADER_ORGID) String orgId) {
+    @GetMapping("/last-updated")
+    public Map<String, String> getLastUpdated(@RequestHeader(HeaderConstants.ORG_ID) String orgId) {
         String lastUpdated = Long.toString(cacheService.getLastUpdated(orgId));
         return ImmutableMap.of("lastUpdated", lastUpdated);
     }
 
-    @RequestMapping(method = RequestMethod.GET)
-    public ResponseEntity get{{ .Name }}(@RequestHeader(value = HeaderConstants.ORG_ID, defaultValue = Constants.DEFAULT_HEADER_ORGID) String orgId,
-                                               @RequestHeader(value = HeaderConstants.CLIENT, defaultValue = Constants.DEFAULT_HEADER_CLIENT) String client,
+    @GetMapping("/cache/size")
+     public ImmutableMap<String, Integer> getCacheSize(@RequestHeader(HeaderConstants.ORG_ID) String orgId) {
+        return ImmutableMap.of("size", cacheService.getAll(orgId).size());
+    }
+
+    @PostMapping("/cache/rebuild")
+    public void rebuildCache(@RequestHeader(HeaderConstants.ORG_ID) String orgId) {
+        cacheService.rebuildCache(orgId);
+    }
+
+    @GetMapping
+    public ResponseEntity get{{ .Name }}(@RequestHeader(HeaderConstants.ORG_ID) String orgId,
+                                               @RequestHeader(HeaderConstants.CLIENT) String client,
                                                @RequestParam(required = false) Long sinceTimeStamp) {
         log.info("OrgId: {}", orgId);
         log.info("Client: {}", client);
@@ -57,8 +67,7 @@ public class {{ .Name }}Controller {
         Event event = new Event(orgId, Constants.COMPONENT, {{ GetAction .Package }}.GET_ALL_{{ ToUpper .Name }}, client);
         fintAuditService.audit(event);
 
-        event.setStatus(Status.CACHE);
-        fintAuditService.audit(event);
+        fintAuditService.audit(event, Status.CACHE);
 
         List<FintResource<{{ .Name }}>> {{ ToLower .Name }};
         if (sinceTimeStamp == null) {
@@ -67,35 +76,26 @@ public class {{ .Name }}Controller {
             {{ ToLower .Name }} = cacheService.getAll(orgId, sinceTimeStamp);
         }
 
-        event.setStatus(Status.CACHE_RESPONSE);
-        fintAuditService.audit(event);
-
-        event.setStatus(Status.SENT_TO_CLIENT);
-        fintAuditService.audit(event);
+        fintAuditService.audit(event, Status.CACHE_RESPONSE, Status.SENT_TO_CLIENT);
 
         return assembler.resources({{ ToLower .Name }});
     }
 
-    @RequestMapping(value = "/***fixme***/{id}", method = RequestMethod.GET)
+    @GetMapping("/***fixme***/{id}")
     public ResponseEntity get{{ .Name }}(@PathVariable String id,
-                                             @RequestHeader(value = HeaderConstants.ORG_ID, defaultValue = Constants.DEFAULT_HEADER_ORGID) String orgId,
-                                             @RequestHeader(value = HeaderConstants.CLIENT, defaultValue = Constants.DEFAULT_HEADER_CLIENT) String client) {
+                                             @RequestHeader(HeaderConstants.ORG_ID) String orgId,
+                                             @RequestHeader(HeaderConstants.CLIENT) String client) {
         log.info("OrgId: {}", orgId);
         log.info("Client: {}", client);
 
-        Event event = new Event(orgId, Constants.COMPONENT, PersonalActions.GET_{{ ToUpper .Name }}, client);
+        Event event = new Event(orgId, Constants.COMPONENT, {{ GetAction .Package }}.GET_{{ ToUpper .Name }}, client);
         fintAuditService.audit(event);
 
-        event.setStatus(Status.CACHE);
-        fintAuditService.audit(event);
+        fintAuditService.audit(event, Status.CACHE);
 
         Optional<FintResource<{{ .Name }}>> {{ ToLower .Name }} = cacheService.get{{ .Name }}(orgId, id);
 
-        event.setStatus(Status.CACHE_RESPONSE);
-        fintAuditService.audit(event);
-
-        event.setStatus(Status.SENT_TO_CLIENT);
-        fintAuditService.audit(event);
+        fintAuditService.audit(event, Status.CACHE_RESPONSE, Status.SENT_TO_CLIENT);
 
         if ({{ ToLower .Name }}.isPresent()) {
             return assembler.resource({{ ToLower .Name }}.get());

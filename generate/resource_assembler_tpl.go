@@ -1,7 +1,7 @@
 package generate
 
 
-const RESOURCE_ASSEMBLER_TEMPLATE = `package no.fint.consumer.{{ ToLower .Name  }};
+const RESOURCE_ASSEMBLER_TEMPLATE = `package no.fint.consumer.models.{{ ToLower .Name  }};
 
 import {{ .Package }}.{{ .Name }};
 import no.fint.model.relation.FintResource;
