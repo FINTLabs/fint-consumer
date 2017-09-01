@@ -6,3 +6,4 @@ net
 *.xml
 fint-consumer
 build
+fint-consumer-*

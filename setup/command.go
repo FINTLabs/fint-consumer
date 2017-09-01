@@ -30,7 +30,6 @@ func CmdSetupConsumer(c *cli.Context) {
 	verfifyParameter(name, "Name parameter missing!")
 
 	pkg := c.String("package")
-	//verfifyParameter(pkg, "Package parameter missing!")
 
 	component := c.String("component")
 	verfifyParameter(component, "Component parameter missing!")

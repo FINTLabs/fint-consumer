@@ -64,11 +64,14 @@ func identifiableFromExtends(class types.Class, classMap map[string]types.Class)
 	if class.Identifiable {
 		return true
 	}
-	if len(class.Extends) > 0 {
-		if classMap[class.Extends].Identifiable {
+
+	for len(class.Extends) > 0 {
+		class = classMap[class.Extends]
+		if class.Identifiable {
 			return true
 		}
 	}
+
 	return false
 }
 
@@ -81,7 +84,6 @@ func identifiable(attribs []types.Attribute) bool {
 	}
 
 	return false
-
 }
 
 func getImports(c types.Class, imports map[string]types.Import) []string {

@@ -6,12 +6,11 @@ import (
 	"fmt"
 	"bytes"
 	"os"
-	"io/ioutil"
 	"github.com/FINTprosjektet/fint-consumer/common/types"
-	"github.com/FINTprosjektet/fint-consumer/common/document"
 	"github.com/FINTprosjektet/fint-consumer/common/config"
 	"github.com/FINTprosjektet/fint-consumer/common/parser"
 	"github.com/FINTprosjektet/fint-consumer/common/utils"
+	"io/ioutil"
 )
 
 var funcMap = template.FuncMap{
@@ -33,11 +32,11 @@ var funcMap = template.FuncMap{
 
 func Generate(tag string, force bool) {
 
-	document.Get(tag, force)
+	//document.Get(tag, force)
 	fmt.Println("Generating Java code:")
 
 	fmt.Println("  > Setup directory structure.")
-	tempGenerateDir := fmt.Sprintf("%s/%s", utils.GetTempDirectory(),  config.BASE_PATH)
+	tempGenerateDir := fmt.Sprintf("%s/%s", utils.GetTempDirectory(), config.BASE_PATH)
 	os.RemoveAll(tempGenerateDir)
 	err := os.MkdirAll(tempGenerateDir, 0777)
 	if err != nil {
@@ -63,7 +62,6 @@ func Generate(tag string, force bool) {
 
 	fmt.Println("Finish generating Java code!")
 
-
 }
 
 func setupPackagePath(packageMap map[string]types.Import, c types.Class) {
@@ -77,13 +75,24 @@ func setupPackagePath(packageMap map[string]types.Import, c types.Class) {
 }
 func getMainPackage(path string) string {
 	a := strings.Split(path, ".")
-	pkg := fmt.Sprintf("%s/%s", a[3], a[4])
+	pkg := ""
+	if len(a) == 6 {
+		pkg = fmt.Sprintf("%s/%s", a[3], a[4])
+	}
+	if len(a) == 5 {
+		pkg = a[3]
+	}
 	return pkg
 }
 
 func writeClassFile(content string, pkg string, name string, className string) {
 	fmt.Printf("    > Creating class: %s\n", className)
-	file := fmt.Sprintf("%s/%s/%s/%s/%s", utils.GetTempDirectory(), config.BASE_PATH, pkg,strings.ToLower(name), className)
+	file := ""
+	if len(pkg) > 0 {
+		file = fmt.Sprintf("%s/%s/%s/%s/%s", utils.GetTempDirectory(), config.BASE_PATH, pkg, strings.ToLower(name), className)
+	} else {
+		file = fmt.Sprintf("%s/%s/%s/%s", utils.GetTempDirectory(), config.BASE_PATH, strings.ToLower(name), className)
+	}
 	err := ioutil.WriteFile(file, []byte(content), 0777)
 	if err != nil {
 		fmt.Printf("Unable to write file: %s", err)
