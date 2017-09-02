@@ -14,7 +14,7 @@ import org.springframework.stereotype.Component;
 public class ConsumerProps {
 
 {{ range $i, $model := . }}
-	public static final String CACHE_INITIALDELAY_{{ ToUpper .Name }} = "${fint.consumer.cache.initialDelay.{{ .Name }}:{{ GetInitialRate $i }}";
+	public static final String CACHE_INITIALDELAY_{{ ToUpper .Name }} = "${fint.consumer.cache.initialDelay.{{ .Name }}:{{ GetInitialRate $i }}}";
 	public static final String CACHE_FIXEDRATE_{{ ToUpper .Name }} = "${fint.consumer.cache.fixedRate.{{ .Name }}:900000}";
 {{end }}
 
