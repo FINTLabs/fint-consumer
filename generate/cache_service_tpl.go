@@ -60,8 +60,15 @@ public class {{ .Name }}CacheService extends CacheService<FintResource<{{ .Name 
         Event event = new Event(orgId, Constants.COMPONENT, {{ GetAction .Package}}.GET_ALL_{{ ToUpper .Name }}, Constants.CACHE_SERVICE);
         consumerEventUtil.send(event);
     }
+
     public Optional<FintResource<{{ .Name }}>> get{{ .Name }}(String orgId, String ***fixme***) {
         return getOne(orgId, (fintResource) -> fintResource.getResource().get***fixme***().getIdentifikatorverdi().equals(***fixme***));
+    }
+
+	@Override
+    public void onAction(Event event) {
+        update(event, new TypeReference<List<FintResource<{{ .Name }}>>>() {
+        });
     }
 }
 `
