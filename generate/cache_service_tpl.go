@@ -34,7 +34,7 @@ public class {{ .Name }}CacheService extends CacheService<FintResource<{{ .Name 
     private ConsumerProps props;
 
     public {{ .Name }}CacheService() {
-        super(MODEL);
+        super(MODEL, {{ GetAction .Package }}.GET_ALL_{{ ToUpper .Name }});
     }
 
     @PostConstruct
