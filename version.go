@@ -1,4 +1,4 @@
 package main
 
 const Name string = "fint-consumer"
-const Version string = "1.1.3"
+Version string = "0.0.0"

@@ -39,10 +39,7 @@ public class {{ .Name }}CacheService extends CacheService<FintResource<{{ .Name 
 
     @PostConstruct
     public void init() {
-        Arrays.stream(props.getOrgs()).forEach(orgId -> {
-            FintCache<FintResource<{{ .Name }}>> cache = new FintCache<>();
-            put(orgId, cache);
-        });
+        Arrays.stream(props.getOrgs()).forEach(this::createCache);
     }
 
     @Scheduled(initialDelayString = ConsumerProps.CACHE_INITIALDELAY_{{ ToUpper .Name }}, fixedRateString = ConsumerProps.CACHE_FIXEDRATE_{{ ToUpper .Name }})
