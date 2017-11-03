@@ -13,7 +13,7 @@ node('docker') {
             sh "go-wrapper download github.com/mitchellh/gox && go-wrapper install github.com/mitchellh/gox"
             unstash 'version'
             VERSION=readFile('version.txt').trim()
-            sh "cd ${goPath}; gox -output=\"./{{.Dir}}-{{.OS}}\" -rebuild -osarch=\"darwin/amd64 windows/amd64\" -ldflags='-X main.Version=${VERSION}'"
+            sh "cd ${goPath}; gox -output=\"./{{.Dir}}-${VERSION}-{{.OS}}\" -rebuild -osarch=\"darwin/amd64 windows/amd64\" -ldflags='-X main.Version=${VERSION}'"
             stash name: 'artifacts', includes: 'fint-consumer-*'
         }
     }
