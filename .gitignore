@@ -4,6 +4,5 @@
 java
 net
 *.xml
-fint-consumer
 build
-fint-consumer-*
+fint-consumer*

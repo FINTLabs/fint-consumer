@@ -139,7 +139,7 @@ func getPackagePath(c *xmlquery.Node, doc *xmlquery.Node) string {
 
 	pkgs = utils.TrimArray(pkgs)
 	pkgs = utils.Reverse(pkgs)
-	return fmt.Sprintf("%s.%s", config.JAVA_PACKAGE_BASE, strings.Join(pkgs, "."))
+	return replaceNO(fmt.Sprintf("%s.%s", config.JAVA_PACKAGE_BASE, strings.Join(pkgs, ".")))
 
 }
 
@@ -159,7 +159,7 @@ func getNamespacePath(c *xmlquery.Node, doc *xmlquery.Node) string {
 
 	pkgs = utils.TrimArray(pkgs)
 	pkgs = utils.Reverse(pkgs)
-	return fmt.Sprintf("%s.%s", config.NET_NAMESPACE_BASE, strings.Join(pkgs, "."))
+	return replaceNO(fmt.Sprintf("%s.%s", config.NET_NAMESPACE_BASE, strings.Join(pkgs, ".")))
 
 }
 
