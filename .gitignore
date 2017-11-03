@@ -1,8 +1,0 @@
-*.test
-.idea
-.DS_Store
-java
-net
-*.xml
-build
-fint-consumer*
