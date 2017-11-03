@@ -23,4 +23,7 @@ node('docker') {
         VERSION=readFile('version.txt').trim()
         archiveArtifacts 'fint-consumer-*'
     }
+    stage('Cleanup') {
+        cleanWs
+    }
 }
