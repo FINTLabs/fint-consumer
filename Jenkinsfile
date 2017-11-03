@@ -1,11 +1,13 @@
 node('master') {
     stage('Prepare') {
+        checkout scm
         sh 'git log --oneline | nl -nln | perl -lne \'if (/^(\\d+).*Version (\\d+\\.\\d+\\.\\d+)/) { print "$2-$1"; exit; }\' > version.txt'
         stash includes: 'version.txt', name: 'version'
     }
 }
 node('docker') {
     stage('Build') {
+        checkout scm
         String goPath = "/go/src/app/vendor/github.com/FINTprosjektet/fint-consumer"
         docker.image('golang').inside("-v /tmp:/tmp -v ${pwd()}:${goPath}") {
             sh "go-wrapper download github.com/mitchellh/gox && go-wrapper install github.com/mitchellh/gox"
