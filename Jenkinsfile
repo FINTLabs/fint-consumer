@@ -24,6 +24,6 @@ node('docker') {
         archiveArtifacts 'fint-consumer-*'
     }
     stage('Cleanup') {
-        cleanWs
+        deleteDir()
     }
 }
