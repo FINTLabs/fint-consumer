@@ -2,9 +2,9 @@ package generate
 
 const CACHE_SERVICE_TEMPLATE = `package no.fint.consumer.models.{{ ToLower .Name  }};
 
+import com.fasterxml.jackson.core.type.TypeReference;
 import lombok.extern.slf4j.Slf4j;
 import no.fint.cache.CacheService;
-import no.fint.cache.FintCache;
 import no.fint.consumer.config.Constants;
 import no.fint.consumer.config.ConsumerProps;
 import no.fint.consumer.event.ConsumerEventUtil;
@@ -17,6 +17,7 @@ import org.springframework.stereotype.Service;
 
 import javax.annotation.PostConstruct;
 import java.util.Arrays;
+import java.util.List;
 import java.util.Optional;
 
 import {{ .Package }}.{{ .Name }};

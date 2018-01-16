@@ -13,3 +13,7 @@ func GetDotGitDir(name string) string {
 func GetGradleFile(name string) string {
 	return fmt.Sprintf("%s/build.gradle", GetWorkingDir(name))
 }
+
+func GetReadmeFile(name string) string {
+	return fmt.Sprintf("%s/README.md", GetWorkingDir(name))
+}

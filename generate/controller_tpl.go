@@ -28,7 +28,7 @@ import {{ GetActionPackage .Package }};
 @Slf4j
 @CrossOrigin
 @RestController
-@RequestMapping(value = "/{{ ToLower .Name }}", produces = {FintRelationsMediaType.APPLICATION_HAL_JSON_VALUE, MediaType.APPLICATION_JSON_UTF8_VALUE})
+@RequestMapping(value = RestEndpoints.{{ ToUpper .Name }}, produces = {FintRelationsMediaType.APPLICATION_HAL_JSON_VALUE, MediaType.APPLICATION_JSON_UTF8_VALUE})
 public class {{ .Name }}Controller {
 
     @Autowired

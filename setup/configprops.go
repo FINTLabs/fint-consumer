@@ -19,17 +19,6 @@ var funcMap = template.FuncMap{
 	},
 }
 
-func getModels(name string) []types.Model {
-	files, _ := ioutil.ReadDir(fmt.Sprintf("%s/src/main/java/no/fint/consumer/models", getConsumerName(name)))
-
-	var models = []types.Model{}
-	for _, f := range files {
-		models = append(models, types.Model{Name: f.Name()})
-	}
-
-	return models
-}
-
 func getConsumerPropsClass(m []types.Model) string {
 	tpl := template.New("class").Funcs(funcMap)
 

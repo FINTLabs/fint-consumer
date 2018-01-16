@@ -5,6 +5,7 @@ import (
 	"github.com/FINTprosjektet/fint-consumer/generate"
 	"github.com/FINTprosjektet/fint-consumer/common/github"
 	"github.com/FINTprosjektet/fint-consumer/common/config"
+	"github.com/FINTprosjektet/fint-consumer/common/types"
 	"fmt"
 	"os"
 	"github.com/FINTprosjektet/fint-consumer/common/utils"
@@ -48,6 +49,8 @@ func CmdSetupConsumer(c *cli.Context) {
 
 	addModelToGradle(component, name)
 
+	createReadme(tag, pkg, component, name)
+
 	r, _ := git.PlainInit(getConsumerName(name), false)
 	w, _ := r.Worktree()
 
@@ -71,10 +74,24 @@ func verfifyParameter(name string, message string) {
 		os.Exit(-1)
 	}
 }
+func getModels(name string) []types.Model {
+	files, _ := ioutil.ReadDir(fmt.Sprintf("%s/src/main/java/no/fint/consumer/models", getConsumerName(name)))
+
+	var models = []types.Model{}
+	for _, f := range files {
+		if f.IsDir() {
+			models = append(models, types.Model{Name: f.Name()})
+		}
+	}
+
+	return models
+}
 func updateConfigFiles(name string) {
 	models := getModels(name)
 	writeConsumerPropsFile(getConsumerPropsClass(models), name)
 	writeConstantsFile(getConstantsClass(name), name)
+	writeLinkMapperFile(getLinkMapperClass(models), name)
+	writeRestEndpointsFile(getRestEndpointsClass(models), name)
 }
 func addModels(component string, pkg string, name string) {
 	src := fmt.Sprintf("%s/%s/%s/%s", utils.GetTempDirectory(), config.BASE_PATH, component, pkg)
@@ -90,7 +107,7 @@ func addModels(component string, pkg string, name string) {
 func addPerson(includePerson bool, name string) {
 	if includePerson {
 		src := fmt.Sprintf("%s/%s/felles/person", utils.GetTempDirectory(), config.BASE_PATH)
-		dest := fmt.Sprintf("./%s/src/main/java/no/fint/consumer/models/", getConsumerName(name))
+		dest := fmt.Sprintf("./%s/src/main/java/no/fint/consumer/models/person/", getConsumerName(name))
 		err := utils.CopyDir(src, dest)
 		if err != nil {
 			fmt.Println(err)
@@ -99,7 +116,7 @@ func addPerson(includePerson bool, name string) {
 }
 
 func addModelToGradle(model string, name string) {
-	m := fmt.Sprintf("compile('no.fint:fint-%s-model-java:+')", model)
+	m := fmt.Sprintf("    compile(\"no.fint:fint-%s-model-java:${apiVersion}\")", model)
 	gradleFile := utils.GetGradleFile(getConsumerName(name))
 	input, err := ioutil.ReadFile(gradleFile)
 	if err != nil {
@@ -117,5 +134,14 @@ func addModelToGradle(model string, name string) {
 	err = ioutil.WriteFile(gradleFile, []byte(output), 0644)
 	if err != nil {
 		log.Fatalln(err)
+	}
+}
+
+func createReadme(tag string, pkg string, component string, name string) {
+	content := fmt.Sprintf("# %s\n\nGenerated from tag `%s` on package `%s` and component `%s`.\n", 
+		getConsumerName(name), tag, pkg, component)
+	err := ioutil.WriteFile(utils.GetReadmeFile(getConsumerName(name)), []byte(content), 0644)
+	if err != nil {
+		fmt.Println(err)
 	}
 }
