@@ -16,6 +16,7 @@ import (
 var funcMap = template.FuncMap{
 	"ToLower": strings.ToLower,
 	"ToUpper": strings.ToUpper,
+	"ToTitle": strings.Title,
 	"GetActionPackage": func(p string) string {
 		a := strings.Split(p, ".")
 		action := a[len(a)-1]

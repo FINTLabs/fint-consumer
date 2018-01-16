@@ -16,10 +16,16 @@ public class {{ .Name }}Assembler extends FintResourceAssembler<{{ .Name }}> {
         super({{ .Name }}Controller.class);
     }
 
+{{ range $i, $ident := .Identifiers -}}
+  {{ if not $ident.Optional }}
     @Override
-    public FintResourceSupport assemble({{ .Name }} {{ ToLower .Name  }} , FintResource<{{ .Name }}> fintResource) {
-        return createResourceWithId({{ ToLower .Name  }}.get***fixme***().getIdentifikatorverdi(), fintResource, "***fixme***");
+    public FintResourceSupport assemble({{ $.Name }} {{ ToLower $.Name  }} , FintResource<{{ $.Name }}> fintResource) {
+        return createResourceWithId({{ ToLower $.Name  }}.get{{ ToTitle $ident.Name }}().getIdentifikatorverdi(), fintResource, "{{ $ident.Name }}");
     }
+    {{ break }}
+  {{ end }}
+{{ end }}
+    
 }
 
 `

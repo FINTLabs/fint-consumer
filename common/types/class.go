@@ -12,4 +12,5 @@ type Class struct {
 	Attributes       []Attribute
 	Relations        []string
 	Identifiable     bool
+	Identifiers      []Identifier
 }

@@ -53,6 +53,7 @@ func GetClasses(tag string, force bool) ([]types.Class, map[string]types.Import,
 		classes[i].Imports = getImports(classes[i], packageMap)
 		classes[i].Using = getUsing(classes[i], packageMap)
 		classes[i].Identifiable = identifiableFromExtends(classes[i], classMap)
+		classes[i].Identifiers = getIdentifiers(classes[i], classMap)
 		javaPackageClassMap[classes[i].Package] = append(javaPackageClassMap[classes[i].Package], classes[i])
 		csPackageClassMap[classes[i].Namespace] = append(csPackageClassMap[classes[i].Namespace], classes[i])
 	}
@@ -85,6 +86,26 @@ func identifiable(attribs []types.Attribute) bool {
 
 	return false
 }
+
+func getIdentifiers(class types.Class, classMap map[string]types.Class) []types.Identifier {
+	var identifiers []types.Identifier
+
+	for _, a := range class.Attributes {
+		if a.Type == "Identifikator" {
+			identifier := types.Identifier{}
+			identifier.Name = a.Name
+			identifier.Optional = a.Optional
+			identifiers = append(identifiers, identifier)
+		}
+	}
+
+	if len(class.Extends) > 0 {
+		identifiers = append(identifiers, getIdentifiers(classMap[class.Extends], classMap)...)
+	}
+
+	return identifiers
+}
+
 
 func getImports(c types.Class, imports map[string]types.Import) []string {
 
@@ -224,6 +245,8 @@ func getAttributes(c *xmlquery.Node) []types.Attribute {
 
 		attrib := types.Attribute{}
 		attrib.Name = replaceNO(a.SelectAttr("name"))
+		attrib.List = strings.Compare(a.SelectElement("bounds").SelectAttr("upper"), "*") == 0
+		attrib.Optional = !attrib.List && strings.Compare(a.SelectElement("bounds").SelectAttr("lower"), "0") == 0
 		attrib.Type = replaceNO(a.SelectElement("properties").SelectAttr("type"))
 
 		attributes = append(attributes, attrib)

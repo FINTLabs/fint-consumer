@@ -28,7 +28,7 @@ import {{ GetActionPackage .Package }};
 @Slf4j
 @CrossOrigin
 @RestController
-@RequestMapping(value = RestEndpoints.{{ ToUpper .Name }}, produces = {FintRelationsMediaType.APPLICATION_HAL_JSON_VALUE, MediaType.APPLICATION_JSON_UTF8_VALUE})
+@RequestMapping(value = "/{{ ToLower .Name }}", produces = {FintRelationsMediaType.APPLICATION_HAL_JSON_VALUE, MediaType.APPLICATION_JSON_UTF8_VALUE})
 public class {{ .Name }}Controller {
 
     @Autowired
@@ -58,11 +58,9 @@ public class {{ .Name }}Controller {
 
     @GetMapping
     public ResponseEntity get{{ .Name }}(@RequestHeader(HeaderConstants.ORG_ID) String orgId,
-                                               @RequestHeader(HeaderConstants.CLIENT) String client,
-                                               @RequestParam(required = false) Long sinceTimeStamp) {
-        log.info("OrgId: {}", orgId);
-        log.info("Client: {}", client);
-        log.info("SinceTimeStamp: {}", sinceTimeStamp);
+            @RequestHeader(HeaderConstants.CLIENT) String client,
+            @RequestParam(required = false) Long sinceTimeStamp) {
+        log.info("OrgId: {}, Client: {}", orgId, client);
 
         Event event = new Event(orgId, Constants.COMPONENT, {{ GetAction .Package }}.GET_ALL_{{ ToUpper .Name }}, client);
         fintAuditService.audit(event);
@@ -81,33 +79,30 @@ public class {{ .Name }}Controller {
         return assembler.resources({{ ToLower .Name }});
     }
 
-    @GetMapping("/***fixme***/{id}")
-    public ResponseEntity get{{ .Name }}(@PathVariable String id,
-                                             @RequestHeader(HeaderConstants.ORG_ID) String orgId,
-                                             @RequestHeader(HeaderConstants.CLIENT) String client) {
-        log.info("OrgId: {}", orgId);
-        log.info("Client: {}", client);
+{{ range $i, $ident := .Identifiers }}
+    @GetMapping("/{{ ToLower $ident.Name }}/{id}")
+    public ResponseEntity get{{ $.Name }}By{{ ToTitle $ident.Name }}(@PathVariable String id,
+            @RequestHeader(HeaderConstants.ORG_ID) String orgId,
+            @RequestHeader(HeaderConstants.CLIENT) String client) {
+        log.info("{{ ToTitle $ident.Name }}: {}, OrgId: {}, Client: {}", id, orgId, client);
 
-        Event event = new Event(orgId, Constants.COMPONENT, {{ GetAction .Package }}.GET_{{ ToUpper .Name }}, client);
+        Event event = new Event(orgId, Constants.COMPONENT, {{ GetAction $.Package }}.GET_{{ ToUpper $.Name }}, client);
         fintAuditService.audit(event);
 
         fintAuditService.audit(event, Status.CACHE);
 
-        Optional<FintResource<{{ .Name }}>> {{ ToLower .Name }} = cacheService.get{{ .Name }}(orgId, id);
+        Optional<FintResource<{{ $.Name }}>> {{ ToLower $.Name }} = cacheService.get{{ $.Name }}By{{ ToTitle $ident.Name }}(orgId, id);
 
         fintAuditService.audit(event, Status.CACHE_RESPONSE, Status.SENT_TO_CLIENT);
 
-        if ({{ ToLower .Name }}.isPresent()) {
-            return assembler.resource({{ ToLower .Name }}.get());
+        if ({{ ToLower $.Name }}.isPresent()) {
+            return assembler.resource({{ ToLower $.Name }}.get());
         } else {
             return ResponseEntity.notFound().build();
         }
     }
-
-    /*
-     * TODO: Add endpoints for all Identifikatore.
-     */
-
+{{ end }}
+    
 }
 
 `

@@ -10,6 +10,7 @@ import no.fint.consumer.config.ConsumerProps;
 import no.fint.consumer.event.ConsumerEventUtil;
 import no.fint.event.model.Event;
 import no.fint.model.relation.FintResource;
+import no.fint.model.felles.kompleksedatatyper.Identifikator;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Service;
@@ -58,9 +59,13 @@ public class {{ .Name }}CacheService extends CacheService<FintResource<{{ .Name 
         consumerEventUtil.send(event);
     }
 
-    public Optional<FintResource<{{ .Name }}>> get{{ .Name }}(String orgId, String ***fixme***) {
-        return getOne(orgId, (fintResource) -> fintResource.getResource().get***fixme***().getIdentifikatorverdi().equals(***fixme***));
+{{ range $i, $ident := .Identifiers }}
+    public Optional<FintResource<{{ $.Name }}>> get{{ $.Name }}By{{ ToTitle $ident.Name }}(String orgId, String {{ $ident.Name }}) {
+        Identifikator needle = new Identifikator();
+        needle.setIdentifikatorverdi({{ $ident.Name }});
+        return getOne(orgId, (fintResource) -> needle.equals(fintResource.getResource().get{{ ToTitle $ident.Name }}()));
     }
+{{ end }}
 
 	@Override
     public void onAction(Event event) {
