@@ -20,7 +20,7 @@ public class {{ .Name }}Assembler extends FintResourceAssembler<{{ .Name }}> {
   {{ if not $ident.Optional }}
     @Override
     public FintResourceSupport assemble({{ $.Name }} {{ ToLower $.Name  }} , FintResource<{{ $.Name }}> fintResource) {
-        return createResourceWithId({{ ToLower $.Name  }}.get{{ ToTitle $ident.Name }}().getIdentifikatorverdi(), fintResource, "{{ $ident.Name }}");
+        return createResourceWithId({{ ToLower $.Name  }}.get{{ ToTitle $ident.Name }}().getIdentifikatorverdi(), fintResource, "{{ ToLower $ident.Name }}");
     }
     {{ break }}
   {{ end }}
