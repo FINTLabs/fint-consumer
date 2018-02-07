@@ -45,17 +45,17 @@ func Generate(tag string, force bool) {
 		fmt.Println(err)
 	}
 
-	classes, packageMap, _, _ := parser.GetClasses(tag, force)
+	classes, _, _, _ := parser.GetClasses(tag, force)
 	for _, c := range classes {
 
 		if !c.Abstract && c.Identifiable {
 			fmt.Printf("  > Creating consumer package and classes for: %s\n", fmt.Sprintf("%s.%s", c.Package, c.Name))
 
-			setupPackagePath(packageMap, c)
+			setupPackagePath(c)
 
-			writeClassFile(getAssemblerClass(c), getMainPackage(packageMap[c.Name].Java), c.Name, getAssemblerClassFileName(c.Name))
-			writeClassFile(getCacheServiceClass(c), getMainPackage(packageMap[c.Name].Java), c.Name, getCacheServiceClassFileName(c.Name))
-			writeClassFile(getControllerClass(c), getMainPackage(packageMap[c.Name].Java), c.Name, getControllerClassFileName(c.Name))
+			writeClassFile(getAssemblerClass(c), getMainPackage(c.Package), c.Name, getAssemblerClassFileName(c.Name))
+			writeClassFile(getCacheServiceClass(c), getMainPackage(c.Package), c.Name, getCacheServiceClassFileName(c.Name))
+			writeClassFile(getControllerClass(c), getMainPackage(c.Package), c.Name, getControllerClassFileName(c.Name))
 
 		}
 
@@ -65,8 +65,8 @@ func Generate(tag string, force bool) {
 
 }
 
-func setupPackagePath(packageMap map[string]types.Import, c types.Class) {
-	path := fmt.Sprintf("%s/%s/%s/%s", utils.GetTempDirectory(), config.BASE_PATH, getMainPackage(packageMap[c.Name].Java), strings.ToLower(c.Name))
+func setupPackagePath(c types.Class) {
+	path := fmt.Sprintf("%s/%s/%s/%s", utils.GetTempDirectory(), config.BASE_PATH, getMainPackage(c.Package), strings.ToLower(c.Name))
 	fmt.Printf("    > Creating directory: %s\n", path)
 	err := os.MkdirAll(path, 0777)
 	if err != nil {
@@ -77,10 +77,10 @@ func setupPackagePath(packageMap map[string]types.Import, c types.Class) {
 func getMainPackage(path string) string {
 	a := strings.Split(path, ".")
 	pkg := ""
-	if len(a) == 6 {
+	if len(a) == 5 {
 		pkg = fmt.Sprintf("%s/%s", a[3], a[4])
 	}
-	if len(a) == 5 {
+	if len(a) == 4 {
 		pkg = a[3]
 	}
 	return pkg
