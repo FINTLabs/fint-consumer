@@ -6,6 +6,7 @@ import com.google.common.collect.ImmutableMap;
 import lombok.extern.slf4j.Slf4j;
 import no.fint.audit.FintAuditService;
 import no.fint.consumer.config.Constants;
+import no.fint.consumer.config.ConsumerProps;
 import no.fint.consumer.utils.RestEndpoints;
 import no.fint.event.model.Event;
 import no.fint.event.model.HeaderConstants;
@@ -40,26 +41,45 @@ public class {{ .Name }}Controller {
     @Autowired
     private {{ .Name }}Assembler assembler;
 
+    @Autowired
+    private ConsumerProps props;
+
     @GetMapping("/last-updated")
-    public Map<String, String> getLastUpdated(@RequestHeader(HeaderConstants.ORG_ID) String orgId) {
+    public Map<String, String> getLastUpdated(@RequestHeader(name = HeaderConstants.ORG_ID, required = false) String orgId) {
+        if (props.isOverrideOrgId() || orgId == null) {
+            orgId = props.getDefaultOrgId();
+        }
         String lastUpdated = Long.toString(cacheService.getLastUpdated(orgId));
         return ImmutableMap.of("lastUpdated", lastUpdated);
     }
 
     @GetMapping("/cache/size")
-     public ImmutableMap<String, Integer> getCacheSize(@RequestHeader(HeaderConstants.ORG_ID) String orgId) {
+     public ImmutableMap<String, Integer> getCacheSize(@RequestHeader(name = HeaderConstants.ORG_ID, required = false) String orgId) {
+        if (props.isOverrideOrgId() || orgId == null) {
+            orgId = props.getDefaultOrgId();
+        }
         return ImmutableMap.of("size", cacheService.getAll(orgId).size());
     }
 
     @PostMapping("/cache/rebuild")
-    public void rebuildCache(@RequestHeader(HeaderConstants.ORG_ID) String orgId) {
+    public void rebuildCache(@RequestHeader(name = HeaderConstants.ORG_ID, required = false) String orgId) {
+        if (props.isOverrideOrgId() || orgId == null) {
+            orgId = props.getDefaultOrgId();
+        }
         cacheService.rebuildCache(orgId);
     }
 
     @GetMapping
-    public ResponseEntity get{{ .Name }}(@RequestHeader(HeaderConstants.ORG_ID) String orgId,
-            @RequestHeader(HeaderConstants.CLIENT) String client,
+    public ResponseEntity get{{ .Name }}(
+            @RequestHeader(name = HeaderConstants.ORG_ID, required = false) String orgId,
+            @RequestHeader(name = HeaderConstants.CLIENT, required = false) String client,
             @RequestParam(required = false) Long sinceTimeStamp) {
+        if (props.isOverrideOrgId() || orgId == null) {
+            orgId = props.getDefaultOrgId();
+        }
+        if (client == null) {
+            client = props.getDefaultClient();
+        }
         log.info("OrgId: {}, Client: {}", orgId, client);
 
         Event event = new Event(orgId, Constants.COMPONENT, {{ GetAction .Package }}.GET_ALL_{{ ToUpper .Name }}, client);
@@ -82,8 +102,14 @@ public class {{ .Name }}Controller {
 {{ range $i, $ident := .Identifiers }}
     @GetMapping("/{{ ToLower $ident.Name }}/{id}")
     public ResponseEntity get{{ $.Name }}By{{ ToTitle $ident.Name }}(@PathVariable String id,
-            @RequestHeader(HeaderConstants.ORG_ID) String orgId,
-            @RequestHeader(HeaderConstants.CLIENT) String client) {
+            @RequestHeader(name = HeaderConstants.ORG_ID, required = false) String orgId,
+            @RequestHeader(name = HeaderConstants.CLIENT, required = false) String client) {
+        if (props.isOverrideOrgId() || orgId == null) {
+            orgId = props.getDefaultOrgId();
+        }
+        if (client == null) {
+            client = props.getDefaultClient();
+        }
         log.info("{{ ToTitle $ident.Name }}: {}, OrgId: {}, Client: {}", id, orgId, client);
 
         Event event = new Event(orgId, Constants.COMPONENT, {{ GetAction $.Package }}.GET_{{ ToUpper $.Name }}, client);
