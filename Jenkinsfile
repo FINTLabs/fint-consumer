@@ -10,7 +10,7 @@ node('docker') {
         checkout scm
         String goPath = "/go/src/app/vendor/github.com/FINTprosjektet/fint-consumer"
         docker.image('golang:1.10rc1').inside("-v /tmp:/tmp -v ${pwd()}:${goPath}") {
-            sh "go-wrapper download github.com/mitchellh/gox && go-wrapper install github.com/mitchellh/gox"
+            sh "go get github.com/mitchellh/gox && go install github.com/mitchellh/gox"
             unstash 'version'
             VERSION=readFile('version.txt').trim()
             sh "cd ${goPath}; gox -output=\"./{{.Dir}}-${VERSION}-{{.OS}}\" -rebuild -osarch=\"darwin/amd64 windows/amd64\" -ldflags='-X main.Version=${VERSION}'"
