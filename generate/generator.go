@@ -61,7 +61,7 @@ func Generate(tag string, force bool) {
 
 	}
 
-	fmt.Println("Finish generating Java code!")
+	fmt.Println("Finished generating Java code!")
 
 }
 

@@ -62,9 +62,13 @@ public class {{ .Name }}CacheService extends CacheService<FintResource<{{ .Name 
 
 {{ range $i, $ident := .Identifiers }}
     public Optional<FintResource<{{ $.Name }}>> get{{ $.Name }}By{{ ToTitle $ident.Name }}(String orgId, String {{ $ident.Name }}) {
-        Identifikator needle = new Identifikator();
-        needle.setIdentifikatorverdi({{ $ident.Name }});
-        return getOne(orgId, (fintResource) -> needle.equals(fintResource.getResource().get{{ ToTitle $ident.Name }}()));
+        return getOne(orgId, (fintResource) -> Optional
+                .ofNullable(fintResource)
+                .map(FintResource::getResource)
+                .map({{ $.Name }}::get{{ ToTitle $ident.Name }})
+                .map(Identifikator::getIdentifikatorverdi)
+                .map(id -> id.equals({{ $ident.Name }}))
+                .orElse(false));
     }
 {{ end }}
 

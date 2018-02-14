@@ -1,6 +1,5 @@
 package generate
 
-
 const RESOURCE_ASSEMBLER_TEMPLATE = `package no.fint.consumer.models.{{ ToLower .Name  }};
 
 import {{ .Package }}.{{ .Name }};
@@ -22,6 +21,7 @@ public class {{ .Name }}Assembler extends FintResourceAssembler<{{ .Name }}> {
     public FintResourceSupport assemble({{ $.Name }} {{ ToLower $.Name  }} , FintResource<{{ $.Name }}> fintResource) {
         return createResourceWithId({{ ToLower $.Name  }}.get{{ ToTitle $ident.Name }}().getIdentifikatorverdi(), fintResource, "{{ ToLower $ident.Name }}");
     }
+    {{/* This only works in go1.10rc1 -- sorry :( */}}
     {{ break }}
   {{ end }}
 {{ end }}
