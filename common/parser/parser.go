@@ -191,10 +191,19 @@ func getName(idref string, doc *xmlquery.Node) string {
 		parent := xmlquery.Find(doc, xpath)
 
 		name = parent[0].SelectAttr("name")
-		name = strings.Replace(name, "FINT", "", -1)
-		name = strings.Replace(name, "Model", "", -1)
+		name = excludeName(name)
 	}
 	return strings.Replace(name, " ", "", -1)
+}
+
+func excludeName(name string) string {
+	if name == "FINT" {
+		name = strings.Replace(name, "FINT", "", -1)
+	}
+	if name == "Model" {
+		name = strings.Replace(name, "Model", "", -1)
+	}
+	return name
 }
 
 func getNameLower(idref string, doc *xmlquery.Node) string {
