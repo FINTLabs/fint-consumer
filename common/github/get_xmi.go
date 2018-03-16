@@ -2,39 +2,40 @@ package github
 
 import (
 	"fmt"
-	"github.com/FINTprosjektet/fint-consumer/common/utils"
-	"github.com/google/go-github/github"
-	"golang.org/x/net/context"
-	"golang.org/x/text/encoding/charmap"
 	"io"
 	"io/ioutil"
 	"log"
 	"os"
 	"strings"
+
+	"github.com/FINTprosjektet/fint-consumer/common/utils"
+	"github.com/google/go-github/github"
 	"github.com/mitchellh/go-homedir"
+	"golang.org/x/net/context"
+	"golang.org/x/text/encoding/charmap"
 )
 
-func GetXMIFile(tag string, force bool) string {
+func GetXMIFile(owner string, repo string, tag string, filename string, force bool) string {
 	outFileName := getFilePath(tag)
 
 	if force {
-		downloadFile(tag, outFileName)
+		downloadFile(owner, repo, tag, filename, outFileName)
 		cleanFile(outFileName)
 	} else if !utils.FileExists(outFileName) {
-		downloadFile(tag, outFileName)
+		downloadFile(owner, repo, tag, filename, outFileName)
 		cleanFile(outFileName)
 	}
 
 	return outFileName
 }
 
-func downloadFile(tag string, outFileName string) {
+func downloadFile(owner string, repo string, tag string, filename string, outFileName string) {
 	client := github.NewClient(nil)
 	ctx := context.Background()
 	opt := &github.RepositoryContentGetOptions{
 		Ref: tag,
 	}
-	out, err := client.Repositories.DownloadContents(ctx, GITHUB_OWNER, GITHUB_REPO, "FINT-informasjonsmodell.xml", opt)
+	out, err := client.Repositories.DownloadContents(ctx, owner, repo, filename, opt)
 	if err != nil {
 		fmt.Printf("Unable to download XMI file from GitHub: %s", err)
 	}

@@ -2,17 +2,18 @@ package github
 
 import (
 	"fmt"
+
 	"github.com/google/go-github/github"
 	"golang.org/x/net/context"
 )
 
-func GetTagList() []string {
+func GetTagList(owner string, repo string) []string {
 	client := github.NewClient(nil)
 	ctx := context.Background()
 	var tagList []string
 
 	opt := &github.ListOptions{}
-	tags, _, err := client.Repositories.ListTags(ctx, GITHUB_OWNER, GITHUB_REPO, opt)
+	tags, _, err := client.Repositories.ListTags(ctx, owner, repo, opt)
 
 	if err != nil {
 		fmt.Printf("Unable to get tag list from GitHub: %s", err)
@@ -25,10 +26,10 @@ func GetTagList() []string {
 	return tagList
 }
 
-func GetLatest() string {
+func GetLatest(owner string, repo string) string {
 	client := github.NewClient(nil)
 	ctx := context.Background()
-	release, _, err := client.Repositories.GetLatestRelease(ctx, GITHUB_OWNER, GITHUB_REPO)
+	release, _, err := client.Repositories.GetLatestRelease(ctx, owner, repo)
 
 	if err != nil {
 		fmt.Printf("Unable to get latest release from GitHub: %s", err)

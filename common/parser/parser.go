@@ -12,8 +12,8 @@ import (
 	"github.com/antchfx/xquery/xml"
 )
 
-func GetClasses(tag string, force bool) ([]types.Class, map[string]types.Import, map[string][]types.Class, map[string][]types.Class) {
-	doc := document.Get(tag, force)
+func GetClasses(owner string, repo string, tag string, filename string, force bool) ([]types.Class, map[string]types.Import, map[string][]types.Class, map[string][]types.Class) {
+	doc := document.Get(owner, repo, tag, filename, force)
 
 	var classes []types.Class
 	packageMap := make(map[string]types.Import)
@@ -105,7 +105,6 @@ func getIdentifiers(class types.Class, classMap map[string]types.Class) []types.
 
 	return identifiers
 }
-
 
 func getImports(c types.Class, imports map[string]types.Import) []string {
 

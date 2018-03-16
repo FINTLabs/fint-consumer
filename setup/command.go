@@ -1,27 +1,25 @@
 package setup
 
 import (
-	"github.com/codegangsta/cli"
-	"github.com/FINTprosjektet/fint-consumer/generate"
-	"github.com/FINTprosjektet/fint-consumer/common/github"
-	"github.com/FINTprosjektet/fint-consumer/common/config"
-	"github.com/FINTprosjektet/fint-consumer/common/types"
 	"fmt"
-	"os"
-	"github.com/FINTprosjektet/fint-consumer/common/utils"
-	"log"
-	"strings"
 	"io/ioutil"
-	"gopkg.in/src-d/go-git.v4/plumbing/object"
-	"time"
-	"gopkg.in/src-d/go-git.v4"
+	"log"
+	"os"
+	"strings"
+
+	"github.com/FINTprosjektet/fint-consumer/common/config"
+	"github.com/FINTprosjektet/fint-consumer/common/github"
+	"github.com/FINTprosjektet/fint-consumer/common/types"
+	"github.com/FINTprosjektet/fint-consumer/common/utils"
+	"github.com/FINTprosjektet/fint-consumer/generate"
+	"github.com/codegangsta/cli"
 )
 
 func CmdSetupConsumer(c *cli.Context) {
 
 	var tag string
 	if c.GlobalString("tag") == config.DEFAULT_TAG {
-		tag = github.GetLatest()
+		tag = github.GetLatest(c.GlobalString("owner"), c.GlobalString("repo"))
 	} else {
 		tag = c.GlobalString("tag")
 	}
@@ -36,7 +34,7 @@ func CmdSetupConsumer(c *cli.Context) {
 	verfifyParameter(component, "Component parameter missing!")
 
 	setupSkeleton(name)
-	generate.Generate(tag, force)
+	generate.Generate(c.GlobalString("owner"), c.GlobalString("repo"), tag, c.GlobalString("filename"), force)
 
 	addModels(component, pkg, name)
 
@@ -49,23 +47,26 @@ func CmdSetupConsumer(c *cli.Context) {
 
 	addModelToGradle(component, name)
 
+	createGradleProperties(tag, name)
+
 	createReadme(tag, pkg, component, name)
 
-	r, _ := git.PlainInit(getConsumerName(name), false)
-	w, _ := r.Worktree()
+	/*
+		r, _ := git.PlainInit(getConsumerName(name), false)
+		w, _ := r.Worktree()
 
+		w.Add(".gitignore")
+		commit, _ := w.Commit("Initial commit", &git.CommitOptions{
+			Author: &object.Signature{
+				Name:  "fint-provider cli",
+				Email: "post@fintlabs.no",
+				When:  time.Now(),
+			},
+		})
 
-	w.Add(".gitignore")
-	commit, _ := w.Commit("Initial commit", &git.CommitOptions{
-		Author: &object.Signature{
-			Name:  "fint-provider cli",
-			Email: "post@fintlabs.no",
-			When:  time.Now(),
-		},
-	})
-
-	obj, _ := r.CommitObject(commit)
-	fmt.Println(obj)
+		obj, _ := r.CommitObject(commit)
+		fmt.Println(obj)
+	*/
 }
 
 func verfifyParameter(name string, message string) {
@@ -137,10 +138,20 @@ func addModelToGradle(model string, name string) {
 }
 
 func createReadme(tag string, pkg string, component string, name string) {
-	content := fmt.Sprintf("# %s\n\nGenerated from tag `%s` on package `%s` and component `%s`.\n", 
+	content := fmt.Sprintf("# %s\n\nGenerated from tag `%s` on package `%s` and component `%s`.\n",
 		getConsumerName(name), tag, pkg, component)
 	err := ioutil.WriteFile(utils.GetReadmeFile(getConsumerName(name)), []byte(content), 0644)
 	if err != nil {
 		fmt.Println(err)
+	}
+}
+
+func createGradleProperties(tag string, name string) {
+	apiVersion := strings.TrimPrefix(tag, "v")
+	content := fmt.Sprintf("version=0.0.0\napiVersion=%s\n", apiVersion)
+	gradleProperties := fmt.Sprintf("%s/gradle.properties", utils.GetWorkingDir(getConsumerName(name)))
+	err := ioutil.WriteFile(gradleProperties, []byte(content), 0644)
+	if err != nil {
+		log.Fatalln(err)
 	}
 }

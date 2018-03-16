@@ -1,16 +1,17 @@
 package generate
 
 import (
+	"bytes"
+	"fmt"
+	"io/ioutil"
+	"os"
 	"strings"
 	"text/template"
-	"fmt"
-	"bytes"
-	"os"
-	"github.com/FINTprosjektet/fint-consumer/common/types"
+
 	"github.com/FINTprosjektet/fint-consumer/common/config"
 	"github.com/FINTprosjektet/fint-consumer/common/parser"
+	"github.com/FINTprosjektet/fint-consumer/common/types"
 	"github.com/FINTprosjektet/fint-consumer/common/utils"
-	"io/ioutil"
 )
 
 var funcMap = template.FuncMap{
@@ -31,7 +32,7 @@ var funcMap = template.FuncMap{
 	},
 }
 
-func Generate(tag string, force bool) {
+func Generate(owner string, repo string, tag string, filename string, force bool) {
 
 	//document.Get(tag, force)
 	fmt.Println("Generating Java code:")
@@ -45,7 +46,7 @@ func Generate(tag string, force bool) {
 		fmt.Println(err)
 	}
 
-	classes, _, _, _ := parser.GetClasses(tag, force)
+	classes, _, _, _ := parser.GetClasses(owner, repo, tag, filename, force)
 	for _, c := range classes {
 
 		if !c.Abstract && c.Identifiable {

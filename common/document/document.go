@@ -2,14 +2,15 @@ package document
 
 import (
 	"fmt"
+	"os"
+
 	"github.com/FINTprosjektet/fint-consumer/common/github"
 	"github.com/antchfx/xquery/xml"
-	"os"
 )
 
-func Get(tag string, force bool) *xmlquery.Node {
+func Get(owner string, repo string, tag string, filename string, force bool) *xmlquery.Node {
 
-	fileName := github.GetXMIFile(tag, force)
+	fileName := github.GetXMIFile(owner, repo, tag, filename, force)
 
 	f, err := os.Open(fileName)
 	if err != nil {

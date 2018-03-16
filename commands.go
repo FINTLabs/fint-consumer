@@ -7,12 +7,30 @@ import (
 	"github.com/FINTprosjektet/fint-consumer/branches"
 	"github.com/FINTprosjektet/fint-consumer/generate"
 	"github.com/FINTprosjektet/fint-consumer/packages"
+	"github.com/FINTprosjektet/fint-consumer/setup"
 	"github.com/FINTprosjektet/fint-consumer/tags"
 	"github.com/codegangsta/cli"
-	"github.com/FINTprosjektet/fint-consumer/setup"
 )
 
 var GlobalFlags = []cli.Flag{
+	cli.StringFlag{
+		EnvVar: "GITHUB_OWNER",
+		Name:   "owner",
+		Value:  "FINTprosjektet",
+		Usage:  "Git repository containing model",
+	},
+	cli.StringFlag{
+		EnvVar: "GITHUB_PROJECT",
+		Name:   "repo",
+		Value:  "fint-informasjonsmodell",
+		Usage:  "Git repository containing model",
+	},
+	cli.StringFlag{
+		EnvVar: "MODEL_FILENAME",
+		Name:   "filename",
+		Value:  "FINT-informasjonsmodell.xml",
+		Usage:  "File name containing information model",
+	},
 	cli.StringFlag{
 		EnvVar: "",
 		Name:   "tag, t",
@@ -55,21 +73,21 @@ var Commands = []cli.Command{
 		Name:   "setup",
 		Usage:  "setup a consumer project",
 		Action: setup.CmdSetupConsumer,
-		Flags:  []cli.Flag{
+		Flags: []cli.Flag{
 			cli.StringFlag{
-				Name:   "name, n",
-				Usage:  "name of the consumer, e.g. personal",
+				Name:  "name, n",
+				Usage: "name of the consumer, e.g. personal",
 			},
 			cli.StringFlag{
-				Name:   "component, c",
-				Usage:  "component prefix, e.g. administrasjon",
+				Name:  "component, c",
+				Usage: "component prefix, e.g. administrasjon",
 			},
 			cli.StringFlag{
-				Name:   "package, p",
-				Usage:  "the package you want to create the consumer for, e.g. kodeverk",
+				Name:  "package, p",
+				Usage: "the package you want to create the consumer for, e.g. kodeverk",
 			},
 			cli.BoolFlag{
-				Name: "includePerson",
+				Name:  "includePerson",
 				Usage: "Include person model",
 			},
 		},
