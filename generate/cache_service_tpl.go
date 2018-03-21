@@ -67,7 +67,7 @@ public class {{ .Name }}CacheService extends CacheService<FintResource<{{ .Name 
                 .map(FintResource::getResource)
                 .map({{ $.Name }}::get{{ ToTitle $ident.Name }})
                 .map(Identifikator::getIdentifikatorverdi)
-                .map(id -> id.equals({{ $ident.Name }}))
+                .map(_id -> _id.equals({{ $ident.Name }}))
                 .orElse(false));
     }
 {{ end }}
