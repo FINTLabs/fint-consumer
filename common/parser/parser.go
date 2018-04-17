@@ -34,6 +34,7 @@ func GetClasses(owner string, repo string, tag string, filename string, force bo
 		class.Package = getPackagePath(c, doc)
 		class.Namespace = getNamespacePath(c, doc)
 		class.Identifiable = identifiable(class.Attributes)
+		class.Writable = writable(class.Attributes)
 
 		imp := types.Import{
 			Java:   fmt.Sprintf("%s.%s", class.Package, class.Name),
@@ -69,6 +70,17 @@ func identifiableFromExtends(class types.Class, classMap map[string]types.Class)
 	for len(class.Extends) > 0 {
 		class = classMap[class.Extends]
 		if class.Identifiable {
+			return true
+		}
+	}
+
+	return false
+}
+
+func writable(attribs []types.Attribute) bool {
+
+	for _, value := range attribs {
+		if value.Writable {
 			return true
 		}
 	}
@@ -258,6 +270,7 @@ func getAttributes(c *xmlquery.Node) []types.Attribute {
 		attrib.List = strings.Compare(a.SelectElement("bounds").SelectAttr("upper"), "*") == 0
 		attrib.Optional = !attrib.List && strings.Compare(a.SelectElement("bounds").SelectAttr("lower"), "0") == 0
 		attrib.Type = replaceNO(a.SelectElement("properties").SelectAttr("type"))
+		attrib.Writable = a.SelectElement("stereotype").SelectAttr("stereotype") == "writable"
 
 		attributes = append(attributes, attrib)
 	}

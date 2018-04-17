@@ -2,13 +2,20 @@ package generate
 
 const CONTROLLER_TEMPLATE = `package no.fint.consumer.models.{{ ToLower .Name  }};
 
+import com.fasterxml.jackson.databind.ObjectMapper;
+import com.fasterxml.jackson.databind.SerializationFeature;
 import com.google.common.collect.ImmutableMap;
 import lombok.extern.slf4j.Slf4j;
+
 import no.fint.audit.FintAuditService;
+
 import no.fint.consumer.config.Constants;
 import no.fint.consumer.config.ConsumerProps;
+import no.fint.consumer.event.ConsumerEventUtil;
 import no.fint.consumer.exceptions.*;
+import no.fint.consumer.status.StatusCache;
 import no.fint.consumer.utils.RestEndpoints;
+
 import no.fint.event.model.Event;
 import no.fint.event.model.HeaderConstants;
 import no.fint.event.model.Status;
@@ -21,8 +28,11 @@ import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
+import org.springframework.web.util.UriComponentsBuilder;
 
 import java.net.UnknownHostException;
+import java.net.URI;
+
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
@@ -49,6 +59,15 @@ public class {{ .Name }}Controller {
 
     @Autowired
     private ConsumerProps props;
+
+    @Autowired
+    private StatusCache statusCache;
+
+    @Autowired
+    private ConsumerEventUtil consumerEventUtil;
+
+    @Autowired
+    private ObjectMapper objectMapper;
 
     @GetMapping("/last-updated")
     public Map<String, String> getLastUpdated(@RequestHeader(name = HeaderConstants.ORG_ID, required = false) String orgId) {
@@ -130,6 +149,87 @@ public class {{ .Name }}Controller {
         return {{ ToLower $.Name }}.orElseThrow(() -> new EntityNotFoundException(id));
     }
 {{ end }}
+
+{{ if .Writable }}
+    @GetMapping("/status/{id}")
+    public ResponseEntity getStatus(@PathVariable String id,
+                                    @RequestHeader(HeaderConstants.ORG_ID) String orgId,
+                                    @RequestHeader(HeaderConstants.CLIENT) String client) {
+        log.info("/status/{} for {} from {}", id, orgId, client);
+        if (!statusCache.containsKey(id)) {
+            return ResponseEntity.notFound().build();
+        }
+        Event e = statusCache.get(id);
+        log.debug("Event: {}", e);
+        log.trace("Data: {}", e.getData());
+        if (!e.getOrgId().equals(orgId)) {
+            return ResponseEntity.badRequest().body(new ErrorResponse("Invalid orgId"));
+        }
+        if (e.getResponseStatus() == null) {
+            return ResponseEntity.status(HttpStatus.ACCEPTED).build();
+        }
+        List<{{.Name}}Resource> result = objectMapper.convertValue(e.getData(), objectMapper.getTypeFactory().constructCollectionType(List.class, {{.Name}}Resource.class));
+        switch (e.getResponseStatus()) {
+            case ACCEPTED:
+                URI location = UriComponentsBuilder.fromUriString(linker.getSelfHref(result.get(0))).build().toUri();
+                return ResponseEntity.status(HttpStatus.SEE_OTHER).location(location).build();
+            case ERROR:
+                return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(new ErrorResponse(e.getMessage()));
+            case CONFLICT:
+                return ResponseEntity.status(HttpStatus.CONFLICT).body(linker.toResources(result));
+            case REJECTED:
+                return ResponseEntity.badRequest().body(new ErrorResponse(e.getMessage()));
+        }
+        return ResponseEntity.status(HttpStatus.ACCEPTED).build();
+    }
+
+    @PostMapping
+    public ResponseEntity post{{.Name}}(
+            @RequestHeader(name = HeaderConstants.ORG_ID) String orgId,
+            @RequestHeader(name = HeaderConstants.CLIENT) String client,
+            @RequestBody {{.Name}}Resource body
+    ) {
+        log.info("post{{.Name}}, OrgId: {}, Client: {}", orgId, client);
+        log.trace("Body: {}", body);
+        Event event = new Event(orgId, Constants.COMPONENT, {{ GetAction .Package}}.UPDATE_{{ ToUpper .Name }}, client);
+        event.addObject(objectMapper.disable(SerializationFeature.FAIL_ON_EMPTY_BEANS).convertValue(body, Map.class));
+        fintAuditService.audit(event);
+
+        consumerEventUtil.send(event);
+
+        statusCache.put(event.getCorrId(), event);
+
+        URI location = UriComponentsBuilder.fromUriString(linker.self()).path("status/{id}").buildAndExpand(event.getCorrId()).toUri();
+        return ResponseEntity.status(HttpStatus.ACCEPTED).location(location).build();
+    }
+
+  {{ range $i, $ident := .Identifiers -}}
+    {{- if not $ident.Optional }}
+    @PutMapping("/{{ ToLower $ident.Name }}/{id}")
+    public ResponseEntity put{{ $.Name }}By{{ ToTitle $ident.Name }}(
+            @PathVariable String id,
+            @RequestHeader(name = HeaderConstants.ORG_ID) String orgId,
+            @RequestHeader(name = HeaderConstants.CLIENT) String client,
+            @RequestBody {{$.Name}}Resource body
+    ) {
+        log.info("put{{$.Name}}By{{ ToTitle $ident.Name}} {}, OrgId: {}, Client: {}", id, orgId, client);
+        log.trace("Body: {}", body);
+        Event event = new Event(orgId, Constants.COMPONENT, {{ GetAction $.Package}}.UPDATE_{{ ToUpper $.Name }}, client);
+        event.setQuery("{{ ToLower $ident.Name }}:" + id);
+        event.addObject(objectMapper.disable(SerializationFeature.FAIL_ON_EMPTY_BEANS).convertValue(body, Map.class));
+        fintAuditService.audit(event);
+
+        consumerEventUtil.send(event);
+
+        statusCache.put(event.getCorrId(), event);
+
+        URI location = UriComponentsBuilder.fromUriString(linker.self()).path("status/{id}").buildAndExpand(event.getCorrId()).toUri();
+        return ResponseEntity.status(HttpStatus.ACCEPTED).location(location).build();
+    }
+    {{ end -}}
+  {{- end }}
+                
+{{- end }}
 
     //
     // Exception handlers
