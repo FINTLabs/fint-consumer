@@ -56,7 +56,7 @@ public class {{ .Name }}CacheService extends CacheService<{{ .Name }}Resource> {
     private ObjectMapper objectMapper;
 
     public {{ .Name }}CacheService() {
-        super(MODEL, {{ GetAction .Package }}.GET_ALL_{{ ToUpper .Name }});
+        super(MODEL, {{ GetAction .Package }}.GET_ALL_{{ ToUpper .Name }}, {{ GetAction .Package }}.UPDATE_{{ ToUpper .Name }});
         objectMapper = new ObjectMapper();
         javaType = objectMapper.getTypeFactory().constructCollectionType(List.class, {{ .Name }}Resource.class);
         objectMapper.disable(SerializationFeature.FAIL_ON_EMPTY_BEANS);
@@ -104,8 +104,13 @@ public class {{ .Name }}CacheService extends CacheService<{{ .Name }}Resource> {
             data = objectMapper.convertValue(event.getData(), javaType);
         }
         data.forEach(linker::toResource);
-        update(event.getOrgId(), data);
-        log.info("Updated cache for {} with {} elements", event.getOrgId(), data.size());
+        if ({{ GetAction .Package }}.valueOf(event.getAction()) == {{ GetAction .Package }}.UPDATE_{{ ToUpper .Name }}) {
+            add(event.getOrgId(), data);
+            log.info("Added {} elements to cache for {}", data.size(), event.getOrgId());
+        } else {
+            update(event.getOrgId(), data);
+            log.info("Updated cache for {} with {} elements", event.getOrgId(), data.size());
+        }
     }
 }
 `
