@@ -215,7 +215,7 @@ public class {{ .Name }}Controller {
         log.info("put{{$.Name}}By{{ ToTitle $ident.Name}} {}, OrgId: {}, Client: {}", id, orgId, client);
         log.trace("Body: {}", body);
         Event event = new Event(orgId, Constants.COMPONENT, {{ GetAction $.Package}}.UPDATE_{{ ToUpper $.Name }}, client);
-        event.setQuery("{{ ToLower $ident.Name }}:" + id);
+        event.setQuery("{{ ToLower $ident.Name }}/" + id);
         event.addObject(objectMapper.disable(SerializationFeature.FAIL_ON_EMPTY_BEANS).convertValue(body, Map.class));
         fintAuditService.audit(event);
 
