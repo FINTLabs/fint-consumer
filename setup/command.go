@@ -112,6 +112,13 @@ func addPerson(includePerson bool, name string) {
 		if err != nil {
 			fmt.Println(err)
 		}
+
+		src = fmt.Sprintf("%s/%s/felles/kontaktperson", utils.GetTempDirectory(), config.BASE_PATH)
+		dest = fmt.Sprintf("./%s/src/main/java/no/fint/consumer/models/kontaktperson/", getConsumerName(name))
+		err = utils.CopyDir(src, dest)
+		if err != nil {
+			fmt.Println(err)
+		}
 	}
 }
 

@@ -103,7 +103,7 @@ public class {{ .Name }}Controller {
         if (client == null) {
             client = props.getDefaultClient();
         }
-        log.info("OrgId: {}, Client: {}", orgId, client);
+        log.debug("OrgId: {}, Client: {}", orgId, client);
 
         Event event = new Event(orgId, Constants.COMPONENT, {{ GetAction .Package }}.GET_ALL_{{ ToUpper .Name }}, client);
         fintAuditService.audit(event);
@@ -124,7 +124,8 @@ public class {{ .Name }}Controller {
 
 {{ range $i, $ident := .Identifiers }}
     @GetMapping("/{{ ToLower $ident.Name }}/{id:.+}")
-    public {{$.Name}}Resource get{{ $.Name }}By{{ ToTitle $ident.Name }}(@PathVariable String id,
+    public {{$.Name}}Resource get{{ $.Name }}By{{ ToTitle $ident.Name }}(
+            @PathVariable String id,
             @RequestHeader(name = HeaderConstants.ORG_ID, required = false) String orgId,
             @RequestHeader(name = HeaderConstants.CLIENT, required = false) String client) {
         if (props.isOverrideOrgId() || orgId == null) {
@@ -133,9 +134,10 @@ public class {{ .Name }}Controller {
         if (client == null) {
             client = props.getDefaultClient();
         }
-        log.info("{{ ToTitle $ident.Name }}: {}, OrgId: {}, Client: {}", id, orgId, client);
+        log.debug("{{ ToTitle $ident.Name }}: {}, OrgId: {}, Client: {}", id, orgId, client);
 
         Event event = new Event(orgId, Constants.COMPONENT, {{ GetAction $.Package }}.GET_{{ ToUpper $.Name }}, client);
+        event.setQuery("{{ ToLower $ident.Name }}/" + id);
         fintAuditService.audit(event);
 
         fintAuditService.audit(event, Status.CACHE);
@@ -150,10 +152,11 @@ public class {{ .Name }}Controller {
 
 {{ if .Writable }}
     @GetMapping("/status/{id}")
-    public ResponseEntity getStatus(@PathVariable String id,
-                                    @RequestHeader(HeaderConstants.ORG_ID) String orgId,
-                                    @RequestHeader(HeaderConstants.CLIENT) String client) {
-        log.info("/status/{} for {} from {}", id, orgId, client);
+    public ResponseEntity getStatus(
+            @PathVariable String id,
+            @RequestHeader(HeaderConstants.ORG_ID) String orgId,
+            @RequestHeader(HeaderConstants.CLIENT) String client) {
+        log.debug("/status/{} for {} from {}", id, orgId, client);
         if (!statusCache.containsKey(id)) {
             return ResponseEntity.notFound().build();
         }
@@ -188,8 +191,9 @@ public class {{ .Name }}Controller {
             @RequestBody {{.Name}}Resource body,
             @RequestParam(name = "validate", required = false) boolean validate
     ) {
-        log.info("post{{.Name}}, Validate: {}, OrgId: {}, Client: {}", validate, orgId, client);
+        log.debug("post{{.Name}}, Validate: {}, OrgId: {}, Client: {}", validate, orgId, client);
         log.trace("Body: {}", body);
+        linker.toResource(body);
         Event event = new Event(orgId, Constants.COMPONENT, {{ GetAction .Package}}.UPDATE_{{ ToUpper .Name }}, client);
         event.addObject(objectMapper.disable(SerializationFeature.FAIL_ON_EMPTY_BEANS).convertValue(body, Map.class));
         event.setOperation(Operation.CREATE);
@@ -216,8 +220,9 @@ public class {{ .Name }}Controller {
             @RequestHeader(name = HeaderConstants.CLIENT) String client,
             @RequestBody {{$.Name}}Resource body
     ) {
-        log.info("put{{$.Name}}By{{ ToTitle $ident.Name}} {}, OrgId: {}, Client: {}", id, orgId, client);
+        log.debug("put{{$.Name}}By{{ ToTitle $ident.Name}} {}, OrgId: {}, Client: {}", id, orgId, client);
         log.trace("Body: {}", body);
+        linker.toResource(body);
         Event event = new Event(orgId, Constants.COMPONENT, {{ GetAction $.Package}}.UPDATE_{{ ToUpper $.Name }}, client);
         event.setQuery("{{ ToLower $ident.Name }}/" + id);
         event.addObject(objectMapper.disable(SerializationFeature.FAIL_ON_EMPTY_BEANS).convertValue(body, Map.class));
