@@ -146,7 +146,7 @@ public class {{ .Name }}Controller {
 
         fintAuditService.audit(event, Status.CACHE_RESPONSE, Status.SENT_TO_CLIENT);
 
-        return {{ ToLower $.Name }}.orElseThrow(() -> new EntityNotFoundException(id));
+        return {{ ToLower $.Name }}.map(linker::toResource).orElseThrow(() -> new EntityNotFoundException(id));
     }
 {{ end }}
 
@@ -193,7 +193,7 @@ public class {{ .Name }}Controller {
     ) {
         log.debug("post{{.Name}}, Validate: {}, OrgId: {}, Client: {}", validate, orgId, client);
         log.trace("Body: {}", body);
-        linker.toResource(body);
+        linker.mapLinks(body);
         Event event = new Event(orgId, Constants.COMPONENT, {{ GetAction .Package}}.UPDATE_{{ ToUpper .Name }}, client);
         event.addObject(objectMapper.disable(SerializationFeature.FAIL_ON_EMPTY_BEANS).convertValue(body, Map.class));
         event.setOperation(Operation.CREATE);
@@ -222,7 +222,7 @@ public class {{ .Name }}Controller {
     ) {
         log.debug("put{{$.Name}}By{{ ToTitle $ident.Name}} {}, OrgId: {}, Client: {}", id, orgId, client);
         log.trace("Body: {}", body);
-        linker.toResource(body);
+        linker.mapLinks(body);
         Event event = new Event(orgId, Constants.COMPONENT, {{ GetAction $.Package}}.UPDATE_{{ ToUpper $.Name }}, client);
         event.setQuery("{{ ToLower $ident.Name }}/" + id);
         event.addObject(objectMapper.disable(SerializationFeature.FAIL_ON_EMPTY_BEANS).convertValue(body, Map.class));

@@ -13,16 +13,19 @@ public class {{ .Name }}Linker extends FintLinker<{{ .Name }}Resource> {
         super({{ .Name }}Resource.class);
     }
 
-{{ range $i, $ident := .Identifiers -}}
-  {{ if not $ident.Optional }}
+    public void mapLinks({{.Name}}Resource resource) {
+        super.mapLinks(resource);
+    }
+    
     @Override
     public String getSelfHref({{ $.Name }}Resource {{ ToLower $.Name  }}) {
-        return createHrefWithId({{ ToLower $.Name  }}.get{{ ToTitle $ident.Name }}().getIdentifikatorverdi(), "{{ ToLower $ident.Name }}");
+        {{ range $i, $ident := .Identifiers -}}
+        if ({{ ToLower $.Name  }}.get{{ ToTitle $ident.Name }}() != null && {{ ToLower $.Name  }}.get{{ ToTitle $ident.Name }}().getIdentifikatorverdi() != null) {
+            return createHrefWithId({{ ToLower $.Name  }}.get{{ ToTitle $ident.Name }}().getIdentifikatorverdi(), "{{ ToLower $ident.Name }}");
+        }
+        {{ end }}
+        return null;
     }
-    {{/* This only works in go1.10rc1 -- sorry :( */}}
-    {{ break }}
-  {{ end }}
-{{ end }}
     
 }
 

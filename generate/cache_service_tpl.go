@@ -103,7 +103,7 @@ public class {{ .Name }}CacheService extends CacheService<{{ .Name }}Resource> {
         } else {
             data = objectMapper.convertValue(event.getData(), javaType);
         }
-        data.forEach(linker::toResource);
+        data.forEach(linker::mapLinks);
         if ({{ GetAction .Package }}.valueOf(event.getAction()) == {{ GetAction .Package }}.UPDATE_{{ ToUpper .Name }}) {
             add(event.getOrgId(), data);
             log.info("Added {} elements to cache for {}", data.size(), event.getOrgId());

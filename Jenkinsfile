@@ -9,7 +9,7 @@ node('docker') {
     stage('Build') {
         checkout scm
         String goPath = "/go/src/app/vendor/github.com/FINTprosjektet/fint-consumer"
-        docker.image('golang:1.10rc1').inside("-v /tmp:/tmp -v ${pwd()}:${goPath}") {
+        docker.image('golang').inside("-v /tmp:/tmp -v ${pwd()}:${goPath}") {
             sh "go get github.com/mitchellh/gox && go install github.com/mitchellh/gox"
             unstash 'version'
             VERSION=readFile('version.txt').trim()
