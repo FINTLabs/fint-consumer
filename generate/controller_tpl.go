@@ -173,6 +173,7 @@ public class {{ .Name }}Controller {
         switch (event.getResponseStatus()) {
             case ACCEPTED:
                 URI location = UriComponentsBuilder.fromUriString(linker.getSelfHref(result.get(0))).build().toUri();
+                fintAuditService.audit(event, Status.SENT_TO_CLIENT);
                 return ResponseEntity.status(HttpStatus.SEE_OTHER).location(location).build();
             case ERROR:
                 return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(event.getResponse());
@@ -211,9 +212,8 @@ public class {{ .Name }}Controller {
         return ResponseEntity.status(HttpStatus.ACCEPTED).location(location).build();
     }
 
-  {{ range $i, $ident := .Identifiers -}}
-    {{- if not $ident.Optional }}
-    @PutMapping("/{{ ToLower $ident.Name }}/{id}")
+  {{ range $i, $ident := .Identifiers }}
+    @PutMapping("/{{ ToLower $ident.Name }}/{id:.+}")
     public ResponseEntity put{{ $.Name }}By{{ ToTitle $ident.Name }}(
             @PathVariable String id,
             @RequestHeader(name = HeaderConstants.ORG_ID) String orgId,
@@ -236,8 +236,7 @@ public class {{ .Name }}Controller {
         URI location = UriComponentsBuilder.fromUriString(linker.self()).path("status/{id}").buildAndExpand(event.getCorrId()).toUri();
         return ResponseEntity.status(HttpStatus.ACCEPTED).location(location).build();
     }
-    {{ end -}}
-  {{- end }}
+  {{ end }}
                 
 {{- end }}
 
