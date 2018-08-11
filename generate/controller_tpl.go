@@ -27,9 +27,10 @@ import {{ .Package }}.{{ .Name }};
 import {{ GetActionPackage .Package }};
 
 @Slf4j
+@Api(tags = {"{{ .Name }}"})
 @CrossOrigin
 @RestController
-@RequestMapping(value = RestEndpoints.{{ ToUpper .Name }}, produces = {FintRelationsMediaType.APPLICATION_HAL_JSON_VALUE, MediaType.APPLICATION_JSON_UTF8_VALUE})
+@RequestMapping(name = "{{ .Name }}", value = RestEndpoints.{{ ToUpper .Name }}, produces = {FintRelationsMediaType.APPLICATION_HAL_JSON_VALUE, MediaType.APPLICATION_JSON_UTF8_VALUE})
 public class {{ .Name }}Controller {
 
     @Autowired
@@ -70,7 +71,7 @@ public class {{ .Name }}Controller {
     }
 
     @GetMapping
-    public ResponseEntity get{{ .Name }}(
+    public ResponseEntity<{{ .Name }}> get{{ .Name }}(
             @RequestHeader(name = HeaderConstants.ORG_ID, required = false) String orgId,
             @RequestHeader(name = HeaderConstants.CLIENT, required = false) String client,
             @RequestParam(required = false) Long sinceTimeStamp) {
@@ -101,7 +102,7 @@ public class {{ .Name }}Controller {
 
 {{ range $i, $ident := .Identifiers }}
     @GetMapping("/{{ ToLower $ident.Name }}/{id}")
-    public ResponseEntity get{{ $.Name }}By{{ ToTitle $ident.Name }}(@PathVariable String id,
+    public ResponseEntity<{{ $.Name }}> get{{ $.Name }}By{{ ToTitle $ident.Name }}(@PathVariable String id,
             @RequestHeader(name = HeaderConstants.ORG_ID, required = false) String orgId,
             @RequestHeader(name = HeaderConstants.CLIENT, required = false) String client) {
         if (props.isOverrideOrgId() || orgId == null) {
