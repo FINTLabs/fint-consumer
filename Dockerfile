@@ -6,6 +6,7 @@ RUN go install -v -ldflags "-X main.Version=${VERSION}"
 RUN /go/bin/fint-consumer --version
 
 FROM alpine
+RUN apk --update add ca-certificates
 COPY --from=builder /go/bin/fint-consumer /usr/bin/fint-consumer
 WORKDIR /src
 VOLUME [ "/src" ]
