@@ -5,6 +5,7 @@ const CONTROLLER_TEMPLATE = `package no.fint.consumer.models.{{ ToLower .Name  }
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.SerializationFeature;
 import com.google.common.collect.ImmutableMap;
+import io.swagger.annotations.Api;
 import lombok.extern.slf4j.Slf4j;
 
 import no.fint.audit.FintAuditService;
@@ -38,12 +39,14 @@ import java.util.Optional;
 import javax.naming.NameNotFoundException;
 
 import {{ resourcePkg .Package }}.{{ .Name }}Resource;
+import {{ resourcePkg .Package }}.{{ .Name }}Resources;
 import {{ GetActionPackage .Package }};
 
 @Slf4j
+@Api(tags = {"{{ .Name }}"})
 @CrossOrigin
 @RestController
-@RequestMapping(value = RestEndpoints.{{ ToUpper .Name }}, produces = {FintRelationsMediaType.APPLICATION_HAL_JSON_VALUE, MediaType.APPLICATION_JSON_UTF8_VALUE})
+@RequestMapping(name = "{{ .Name }}", value = RestEndpoints.{{ ToUpper .Name }}, produces = {FintRelationsMediaType.APPLICATION_HAL_JSON_VALUE, MediaType.APPLICATION_JSON_UTF8_VALUE})
 public class {{ .Name }}Controller {
 
     @Autowired
@@ -93,7 +96,7 @@ public class {{ .Name }}Controller {
     }
 
     @GetMapping
-    public FintResources get{{ .Name }}(
+    public {{ .Name }}Resources get{{ .Name }}(
             @RequestHeader(name = HeaderConstants.ORG_ID, required = false) String orgId,
             @RequestHeader(name = HeaderConstants.CLIENT, required = false) String client,
             @RequestParam(required = false) Long sinceTimeStamp) {
