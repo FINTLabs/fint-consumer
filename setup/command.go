@@ -123,7 +123,7 @@ func addPerson(includePerson bool, name string) {
 }
 
 func addModelToGradle(model string, name string) {
-	m := fmt.Sprintf("    compile(\"no.fint:fint-%s-model-java:${apiVersion}\")", model)
+	m := fmt.Sprintf("    compile(\"no.fint:fint-%s-resource-model-java:${apiVersion}\")", model)
 	gradleFile := utils.GetGradleFile(getConsumerName(name))
 	input, err := ioutil.ReadFile(gradleFile)
 	if err != nil {
