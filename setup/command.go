@@ -49,6 +49,8 @@ func CmdSetupConsumer(c *cli.Context) {
 
 	createGradleProperties(tag, name)
 
+	createGradleSettings(name)
+
 	createReadme(tag, pkg, component, name)
 
 	/*
@@ -158,6 +160,15 @@ func createGradleProperties(tag string, name string) {
 	content := fmt.Sprintf("version=0.0.0\napiVersion=%s\n", apiVersion)
 	gradleProperties := fmt.Sprintf("%s/gradle.properties", utils.GetWorkingDir(getConsumerName(name)))
 	err := ioutil.WriteFile(gradleProperties, []byte(content), 0644)
+	if err != nil {
+		log.Fatalln(err)
+	}
+}
+
+func createGradleSettings(name string) {
+	content := fmt.Sprintf("rootProject.name = '%s'\n", name)
+	gradleSettings := fmt.Sprintf("%s/settings.gradle", utils.GetWorkingDir(getConsumerName(name)))
+	err := ioutil.WriteFile(gradleSettings, []byte(content), 0644)
 	if err != nil {
 		log.Fatalln(err)
 	}
