@@ -80,14 +80,7 @@ func setupPackagePath(c types.Class) {
 }
 func getMainPackage(path string) string {
 	a := strings.Split(path, ".")
-	pkg := ""
-	if len(a) == 5 {
-		pkg = fmt.Sprintf("%s/%s", a[3], a[4])
-	}
-	if len(a) == 4 {
-		pkg = a[3]
-	}
-	return pkg
+	return strings.Join(a[3:], "/")
 }
 
 func writeClassFile(content string, pkg string, name string, className string) {
