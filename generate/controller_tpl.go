@@ -179,13 +179,17 @@ public class {{ .Name }}Controller {
                     return ResponseEntity.ok(event.getResponse());
                 }
                 URI location = UriComponentsBuilder.fromUriString(linker.getSelfHref(result.get(0))).build().toUri();
+                event.setMessage(location.toString());
                 fintAuditService.audit(event, Status.SENT_TO_CLIENT);
                 return ResponseEntity.status(HttpStatus.SEE_OTHER).location(location).build();
             case ERROR:
+                fintAuditService.audit(event, Status.SENT_TO_CLIENT);
                 return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(event.getResponse());
             case CONFLICT:
+                fintAuditService.audit(event, Status.SENT_TO_CLIENT);
                 return ResponseEntity.status(HttpStatus.CONFLICT).body(linker.toResources(result));
             case REJECTED:
+                fintAuditService.audit(event, Status.SENT_TO_CLIENT);
                 return ResponseEntity.badRequest().body(event.getResponse());
         }
         return ResponseEntity.status(HttpStatus.ACCEPTED).body(event.getResponse());
