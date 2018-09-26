@@ -10,6 +10,10 @@ import org.springframework.stereotype.Component;
 
 import java.util.Collection;
 
+import static java.util.Objects.isNull;
+import static org.springframework.util.StringUtils.isEmpty;
+
+
 @Component
 public class {{ .Name }}Linker extends FintLinker<{{ .Name }}Resource> {
 
@@ -32,7 +36,7 @@ public class {{ .Name }}Linker extends FintLinker<{{ .Name }}Resource> {
     @Override
     public String getSelfHref({{ $.Name }}Resource {{ ToLower $.Name  }}) {
         {{ range $i, $ident := .Identifiers -}}
-        if ({{ ToLower $.Name  }}.get{{ ToTitle $ident.Name }}() != null && {{ ToLower $.Name  }}.get{{ ToTitle $ident.Name }}().getIdentifikatorverdi() != null) {
+        if (!isNull({{ ToLower $.Name  }}.get{{ ToTitle $ident.Name }}()) && !isEmpty({{ ToLower $.Name  }}.get{{ ToTitle $ident.Name }}().getIdentifikatorverdi())) {
             return createHrefWithId({{ ToLower $.Name  }}.get{{ ToTitle $ident.Name }}().getIdentifikatorverdi(), "{{ ToLower $ident.Name }}");
         }
         {{ end }}
