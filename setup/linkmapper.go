@@ -1,16 +1,16 @@
 package setup
 
 import (
-	"strings"
 	"bytes"
-	"text/template"
 	"fmt"
 	"io/ioutil"
+	"strings"
+	"text/template"
+
 	"github.com/FINTprosjektet/fint-consumer/common/types"
 )
 
-
-func getLinkMapperClass(m []types.Model) string {
+func getLinkMapperClass(component string, pkg string, models []types.Model) string {
 	var funcMap = template.FuncMap{
 		"ToLower": strings.ToLower,
 		"ToUpper": strings.ToUpper,
@@ -22,6 +22,16 @@ func getLinkMapperClass(m []types.Model) string {
 
 	if err != nil {
 		panic(err)
+	}
+
+	m := struct {
+		Component string
+		Package   string
+		Models    []types.Model
+	}{
+		component,
+		pkg,
+		models,
 	}
 
 	var b bytes.Buffer

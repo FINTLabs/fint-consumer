@@ -22,10 +22,6 @@ public class ConsumerProps {
     @Value("${fint.events.orgIds:fint.no}")
     private String[] orgs;
 
-{{ range $i, $model := . }}    
-    public static final String CACHE_INITIALDELAY_{{ ToUpper .Name }} = "${fint.consumer.cache.initialDelay.{{ .Name }}:{{ GetInitialRate $i }}}";
-    public static final String CACHE_FIXEDRATE_{{ ToUpper .Name }} = "${fint.consumer.cache.fixedRate.{{ .Name }}:900000}";
-{{end }}    
 
 }
 `

@@ -2,21 +2,39 @@ package setup
 
 import (
 	"bytes"
-	"text/template"
 	"fmt"
 	"io/ioutil"
+	"strconv"
+	"strings"
+	"text/template"
+
+	"github.com/FINTprosjektet/fint-consumer/common/types"
 )
 
-func getConstantsClass(name string) string {
-	tpl := template.New("class")
+var funcMap = template.FuncMap{
+	"ToLower": strings.ToLower,
+	"ToUpper": strings.ToUpper,
+	"GetInitialRate": func(i int) string {
+		rate := (i * 10000) + 60000
+		return strconv.Itoa(rate)
+	},
+}
+
+func getConstantsClass(name string, models []types.Model) string {
+	tpl := template.New("class").Funcs(funcMap)
 
 	parse, err := tpl.Parse(CONSTANTS_TEMPLATE)
 
 	if err != nil {
 		panic(err)
 	}
-	m := map[string]string {
-		"Name": name,
+
+	m := struct {
+		Name   string
+		Models []types.Model
+	}{
+		name,
+		models,
 	}
 
 	var b bytes.Buffer

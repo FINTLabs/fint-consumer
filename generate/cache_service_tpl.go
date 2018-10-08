@@ -23,7 +23,6 @@ import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Service;
 
 import javax.annotation.PostConstruct;
-import java.util.Arrays;
 import java.util.List;
 import java.util.Optional;
 
@@ -65,12 +64,12 @@ public class {{ .Name }}CacheService extends CacheService<{{ .Name }}Resource> {
 
     @PostConstruct
     public void init() {
-        Arrays.stream(props.getOrgs()).forEach(this::createCache);
+        props.getAssets().forEach(this::populateCache);
     }
 
-    @Scheduled(initialDelayString = ConsumerProps.CACHE_INITIALDELAY_{{ ToUpper .Name }}, fixedRateString = ConsumerProps.CACHE_FIXEDRATE_{{ ToUpper .Name }})
+    @Scheduled(initialDelayString = Constants.CACHE_INITIALDELAY_{{ ToUpper .Name }}, fixedRateString = Constants.CACHE_FIXEDRATE_{{ ToUpper .Name }})
     public void populateCacheAll() {
-        Arrays.stream(props.getOrgs()).forEach(this::populateCache);
+        props.getAssets().forEach(this::populateCache);
     }
 
     public void rebuildCache(String orgId) {
