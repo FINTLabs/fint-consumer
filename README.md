@@ -17,7 +17,7 @@ USAGE:
    fint-consumer [global options] command [command options] [arguments...]
 
 VERSION:
-   0.0.0
+   2.0.0
 
 AUTHOR:
    FINTProsjektet
@@ -55,12 +55,12 @@ Mount the directory where you want the generated source code to be written as `/
 
 Linux / MacOS:
 ```bash
-docker run -v $(pwd):/src dtr.fintlabs.no/jenkins/fint-consumer:latest <ARGS>
+docker run -v $(pwd):/src dtr.fintlabs.no/jenkins/fint-consumer:2.0.0 <ARGS>
 ```
 
 Windows PowerShell:
 ```ps1
-docker run -v ${pwd}:/src dtr.fintlabs.no/jenkins/fint-consumer:latest <ARGS>
+docker run -v ${pwd}:/src dtr.fintlabs.no/jenkins/fint-consumer:2.0.0 <ARGS>
 ```
 
 ### Go
