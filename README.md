@@ -1,5 +1,8 @@
 # fint-consumer
 
+[![Docker image](https://fint-slack.azurewebsites.net/api/badge?namespace=jenkins&reponame=fint-consumer)](https://dtr.fintlabs.no/repositories/jenkins/fint-consumer/tags)
+[![MIT license](http://img.shields.io/badge/license-MIT-brightgreen.svg)](http://opensource.org/licenses/MIT)
+
 ## Description
 Generates `Java` consumer code from EA XMI export. This utility is mainly for internal FINT use, but if you find it useful, please use it!
 
