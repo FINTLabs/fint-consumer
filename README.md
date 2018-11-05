@@ -1,9 +1,7 @@
 # fint-consumer
 
-
-
 ## Description
-Generates `Java` consumer code from EA XMI export. This utility is mainly for internal FINT use, but if you find it usefull, please use it!
+Generates `Java` consumer code from EA XMI export. This utility is mainly for internal FINT use, but if you find it useful, please use it!
 
 ## Usage
 
@@ -16,7 +14,7 @@ USAGE:
    fint-consumer [global options] command [command options] [arguments...]
 
 VERSION:
-   1.0.0
+   0.0.0
 
 AUTHOR:
    FINTProsjektet
@@ -26,9 +24,13 @@ COMMANDS:
      listPackages  list Java packages
      listTags      list tags
      listBranches  list branches
+     setup         setup a consumer project
      help, h       Shows a list of commands or help for one command
 
 GLOBAL OPTIONS:
+   --owner value          Git repository containing model (default: "FINTprosjektet") [$GITHUB_OWNER]
+   --repo value           Git repository containing model (default: "fint-informasjonsmodell") [$GITHUB_PROJECT]
+   --filename value       File name containing information model (default: "FINT-informasjonsmodell.xml") [$MODEL_FILENAME]
    --tag value, -t value  the tag (version) of the model to generate (default: "latest")
    --force, -f            force downloading XMI for GitHub.
    --help, -h             show help
@@ -42,17 +44,20 @@ The downloaded XMI file is put in the `$HOME/.fint-consumer/.cache`. If you don'
 
 ### Binaries
 
-Precompiled binaries can be downloaded [here](https://github.com/FINTprosjektet/fint-consumer/releases/latest)
+### Binaries
 
-* Download for your os
-* Rename to fint-consumer
-* Copy to directory in your `PATH`
+Precompiled binaries are available as [Docker images](https://dtr.fintlabs.no/)
 
-*Example macOS*
-```shell
-$ mv fint-consumer-darwin fint-consumer
-$ chmod +x fint-consumer
-$ sudo mv fint-consumer /usr/local/bin
+Mount the directory where you want the generated source code to be written as `/src`.
+
+Linux / MacOS:
+```bash
+docker run -v $(pwd):/src dtr.fintlabs.no/jenkins/fint-consumer:latest <ARGS>
+```
+
+Windows PowerShell:
+```ps1
+docker run -v ${pwd}:/src dtr.fintlabs.no/jenkins/fint-consumer:latest <ARGS>
 ```
 
 ### Go

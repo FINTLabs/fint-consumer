@@ -12,5 +12,6 @@ type Class struct {
 	Attributes       []Attribute
 	Relations        []string
 	Identifiable     bool
+	Writable         bool
 	Identifiers      []Identifier
 }

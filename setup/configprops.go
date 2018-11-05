@@ -1,23 +1,13 @@
 package setup
 
 import (
-	"io/ioutil"
-	"github.com/FINTprosjektet/fint-consumer/common/types"
-	"strings"
-	"text/template"
 	"bytes"
-	"strconv"
 	"fmt"
-)
+	"io/ioutil"
+	"text/template"
 
-var funcMap = template.FuncMap{
-	"ToLower": strings.ToLower,
-	"ToUpper": strings.ToUpper,
-	"GetInitialRate": func(i int) string {
-		rate := (i * 10000) + 60000
-		return strconv.Itoa(rate)
-	},
-}
+	"github.com/FINTprosjektet/fint-consumer/common/types"
+)
 
 func getConsumerPropsClass(m []types.Model) string {
 	tpl := template.New("class").Funcs(funcMap)

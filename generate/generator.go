@@ -30,6 +30,9 @@ var funcMap = template.FuncMap{
 		action = strings.Title(action) + "Actions"
 		return action
 	},
+	"resourcePkg": func(s string) string {
+		return strings.Replace(s, "model", "model.resource", -1)
+	},
 }
 
 func Generate(owner string, repo string, tag string, filename string, force bool) {
@@ -54,7 +57,7 @@ func Generate(owner string, repo string, tag string, filename string, force bool
 
 			setupPackagePath(c)
 
-			writeClassFile(getAssemblerClass(c), getMainPackage(c.Package), c.Name, getAssemblerClassFileName(c.Name))
+			writeClassFile(getLinkerClass(c), getMainPackage(c.Package), c.Name, getLinkerClassFileName(c.Name))
 			writeClassFile(getCacheServiceClass(c), getMainPackage(c.Package), c.Name, getCacheServiceClassFileName(c.Name))
 			writeClassFile(getControllerClass(c), getMainPackage(c.Package), c.Name, getControllerClassFileName(c.Name))
 
@@ -77,14 +80,7 @@ func setupPackagePath(c types.Class) {
 }
 func getMainPackage(path string) string {
 	a := strings.Split(path, ".")
-	pkg := ""
-	if len(a) == 5 {
-		pkg = fmt.Sprintf("%s/%s", a[3], a[4])
-	}
-	if len(a) == 4 {
-		pkg = a[3]
-	}
-	return pkg
+	return strings.Join(a[3:], "/")
 }
 
 func writeClassFile(content string, pkg string, name string, className string) {
@@ -101,8 +97,8 @@ func writeClassFile(content string, pkg string, name string, className string) {
 	}
 }
 
-func getAssemblerClassFileName(name string) string {
-	return fmt.Sprintf("%sAssembler.java", name)
+func getLinkerClassFileName(name string) string {
+	return fmt.Sprintf("%sLinker.java", name)
 }
 
 func getCacheServiceClassFileName(name string) string {
@@ -113,8 +109,8 @@ func getControllerClassFileName(name string) string {
 	return fmt.Sprintf("%sController.java", name)
 }
 
-func getAssemblerClass(c types.Class) string {
-	return getClass(c, RESOURCE_ASSEMBLER_TEMPLATE)
+func getLinkerClass(c types.Class) string {
+	return getClass(c, LINKER_TEMPLATE)
 }
 
 func getCacheServiceClass(c types.Class) string {
