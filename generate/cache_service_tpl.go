@@ -64,7 +64,7 @@ public class {{ .Name }}CacheService extends CacheService<{{ .Name }}Resource> {
 
     @PostConstruct
     public void init() {
-        props.getAssets().forEach(this::populateCache);
+        props.getAssets().forEach(this::createCache);
     }
 
     @Scheduled(initialDelayString = Constants.CACHE_INITIALDELAY_{{ ToUpper .Name }}, fixedRateString = Constants.CACHE_FIXEDRATE_{{ ToUpper .Name }})
