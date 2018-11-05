@@ -1,6 +1,7 @@
 # fint-consumer
 
 [![Docker image](https://fint-slack.azurewebsites.net/api/badge?namespace=jenkins&reponame=fint-consumer)](https://dtr.fintlabs.no/repositories/jenkins/fint-consumer/tags)
+[![Build Status](https://jenkins.fintlabs.no/buildStatus/icon?job=FINTprosjektet/fint-consumer/master)](https://jenkins.fintlabs.no/job/FINTprosjektet/fint-consumer/master)
 [![MIT license](http://img.shields.io/badge/license-MIT-brightgreen.svg)](http://opensource.org/licenses/MIT)
 
 ## Description
