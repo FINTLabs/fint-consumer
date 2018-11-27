@@ -9,6 +9,7 @@ import com.fasterxml.jackson.databind.SerializationFeature;
 import lombok.extern.slf4j.Slf4j;
 
 import no.fint.cache.CacheService;
+import no.fint.cache.model.CacheObject;
 import no.fint.consumer.config.Constants;
 import no.fint.consumer.config.ConsumerProps;
 import no.fint.consumer.event.ConsumerEventUtil;
@@ -25,6 +26,7 @@ import org.springframework.stereotype.Service;
 import javax.annotation.PostConstruct;
 import java.util.List;
 import java.util.Optional;
+import java.util.stream.Collectors;
 
 import {{ .Package }}.{{ .Name }};
 import {{ resourcePkg .Package }}.{{ .Name }}Resource;
@@ -112,8 +114,12 @@ public class {{ .Name }}CacheService extends CacheService<{{ .Name }}Resource> {
                 log.debug("Ignoring payload for {} with response status {}", event.getOrgId(), event.getResponseStatus());
             }
         } else {
-            update(event.getOrgId(), data);
-            log.info("Updated cache for {} with {} elements", event.getOrgId(), data.size());
+            List<CacheObject<{{ .Name }}Resource>> cacheObjects = data
+                    .stream()
+                    .map(i -> new CacheObject<>(i, linker.hashCodes(i)))
+                    .collect(Collectors.toList());
+            updateCache(event.getOrgId(), cacheObjects);
+            log.info("Updated cache for {} with {} cache objects", event.getOrgId(), cacheObjects.size());
         }
     }
 }
