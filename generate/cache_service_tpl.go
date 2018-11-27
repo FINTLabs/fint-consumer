@@ -87,7 +87,8 @@ public class {{ .Name }}CacheService extends CacheService<{{ .Name }}Resource> {
 
 {{ range $i, $ident := .Identifiers }}
     public Optional<{{ $.Name }}Resource> get{{ $.Name }}By{{ ToTitle $ident.Name }}(String orgId, String {{ $ident.Name }}) {
-        return getOne(orgId, (resource) -> Optional
+        return getOne(orgId, {{ $ident.Name }}.hashCode(),
+            (resource) -> Optional
                 .ofNullable(resource)
                 .map({{ $.Name }}Resource::get{{ ToTitle $ident.Name }})
                 .map(Identifikator::getIdentifikatorverdi)
