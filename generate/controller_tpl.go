@@ -171,13 +171,14 @@ public class {{ .Name }}Controller {
         if (event.getResponseStatus() == null) {
             return ResponseEntity.status(HttpStatus.ACCEPTED).build();
         }
-        List<{{.Name}}Resource> result = objectMapper.convertValue(event.getData(), objectMapper.getTypeFactory().constructCollectionType(List.class, {{.Name}}Resource.class));
+        List<{{.Name}}Resource> result;
         switch (event.getResponseStatus()) {
             case ACCEPTED:
                 if (event.getOperation() == Operation.VALIDATE) {
                     fintAuditService.audit(event, Status.SENT_TO_CLIENT);
                     return ResponseEntity.ok(event.getResponse());
                 }
+                result = objectMapper.convertValue(event.getData(), objectMapper.getTypeFactory().constructCollectionType(List.class, {{.Name}}Resource.class));
                 URI location = UriComponentsBuilder.fromUriString(linker.getSelfHref(result.get(0))).build().toUri();
                 event.setMessage(location.toString());
                 fintAuditService.audit(event, Status.SENT_TO_CLIENT);
@@ -187,6 +188,7 @@ public class {{ .Name }}Controller {
                 return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(event.getResponse());
             case CONFLICT:
                 fintAuditService.audit(event, Status.SENT_TO_CLIENT);
+                result = objectMapper.convertValue(event.getData(), objectMapper.getTypeFactory().constructCollectionType(List.class, {{.Name}}Resource.class));
                 return ResponseEntity.status(HttpStatus.CONFLICT).body(linker.toResources(result));
             case REJECTED:
                 fintAuditService.audit(event, Status.SENT_TO_CLIENT);
