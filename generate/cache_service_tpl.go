@@ -109,8 +109,12 @@ public class {{ .Name }}CacheService extends CacheService<{{ .Name }}Resource> {
         data.forEach(linker::mapLinks);
         if ({{ GetAction .Package }}.valueOf(event.getAction()) == {{ GetAction .Package }}.UPDATE_{{ ToUpper .Name }}) {
             if (event.getResponseStatus() == ResponseStatus.ACCEPTED || event.getResponseStatus() == ResponseStatus.CONFLICT) {
-                add(event.getOrgId(), data);
-                log.info("Added {} elements to cache for {}", data.size(), event.getOrgId());
+                List<CacheObject<{{ .Name }}Resource>> cacheObjects = data
+                    .stream()
+                    .map(i -> new CacheObject<>(i, linker.hashCodes(i)))
+                    .collect(Collectors.toList());
+                addCache(event.getOrgId(), cacheObjects);
+                log.info("Added {} cache objects to cache for {}", cacheObjects.size(), event.getOrgId());
             } else {
                 log.debug("Ignoring payload for {} with response status {}", event.getOrgId(), event.getResponseStatus());
             }
