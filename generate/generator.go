@@ -33,6 +33,13 @@ var funcMap = template.FuncMap{
 	"resourcePkg": func(s string) string {
 		return strings.Replace(s, "model", "model.resource", -1)
 	},
+	"modelPkg": func(s string) string {
+		l := strings.Split(s, ".")
+		if len(l) <= 5 {
+			return ""
+		}
+		return strings.Join(l[5:], ".") + "."
+	},
 }
 
 func Generate(owner string, repo string, tag string, filename string, force bool) {

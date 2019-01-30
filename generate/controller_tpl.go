@@ -1,6 +1,6 @@
 package generate
 
-const CONTROLLER_TEMPLATE = `package no.fint.consumer.models.{{ ToLower .Name  }};
+const CONTROLLER_TEMPLATE = `package no.fint.consumer.models.{{ modelPkg .Package  }}{{ ToLower .Name }};
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.SerializationFeature;

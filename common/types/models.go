@@ -1,5 +1,6 @@
 package types
 
 type Model struct {
-	Name string
+	Name    string
+	Package string
 }

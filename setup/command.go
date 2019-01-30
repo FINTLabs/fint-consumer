@@ -5,6 +5,7 @@ import (
 	"io/ioutil"
 	"log"
 	"os"
+	"path/filepath"
 	"strings"
 
 	"github.com/FINTprosjektet/fint-consumer/common/config"
@@ -78,15 +79,25 @@ func verfifyParameter(name string, message string) {
 	}
 }
 func getModels(name string) []types.Model {
-	files, _ := ioutil.ReadDir(fmt.Sprintf("%s/src/main/java/no/fint/consumer/models", getConsumerName(name)))
-
 	var models = []types.Model{}
-	for _, f := range files {
-		if f.IsDir() {
-			models = append(models, types.Model{Name: f.Name()})
-		}
-	}
 
+	walkModels := func(path string, info os.FileInfo, err error) error {
+		if err != nil {
+			return err
+		}
+		if !info.IsDir() && strings.HasSuffix(path, "CacheService.java") {
+			name := strings.ToLower(strings.TrimSuffix(filepath.Base(path), "CacheService.java"))
+			l := strings.Split(filepath.Dir(path), "/")
+			pkg := strings.Join(l[4:], ".")
+			models = append(models, types.Model{Name: name, Package: pkg})
+			return filepath.SkipDir
+		}
+		return nil
+	}
+	err := filepath.Walk(fmt.Sprintf("%s/src/main/java/no/fint/consumer/models", getConsumerName(name)), walkModels)
+	if err != nil {
+		fmt.Println(err)
+	}
 	return models
 }
 func updateConfigFiles(component string, pkg string, name string) {
