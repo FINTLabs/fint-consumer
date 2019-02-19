@@ -3,8 +3,8 @@ package packages
 import (
 	"fmt"
 
-	"github.com/FINTprosjektet/fint-consumer/common/config"
-	"github.com/FINTprosjektet/fint-consumer/common/github"
+	"github.com/FINTLabs/fint-consumer/common/config"
+	"github.com/FINTLabs/fint-consumer/common/github"
 	"github.com/codegangsta/cli"
 )
 

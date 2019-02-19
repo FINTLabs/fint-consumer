@@ -6,7 +6,7 @@ import (
 	"text/template"
 	"fmt"
 	"io/ioutil"
-	"github.com/FINTprosjektet/fint-consumer/common/types"
+	"github.com/FINTLabs/fint-consumer/common/types"
 )
 
 

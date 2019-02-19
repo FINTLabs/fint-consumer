@@ -8,11 +8,11 @@ import (
 	"path/filepath"
 	"strings"
 
-	"github.com/FINTprosjektet/fint-consumer/common/config"
-	"github.com/FINTprosjektet/fint-consumer/common/github"
-	"github.com/FINTprosjektet/fint-consumer/common/types"
-	"github.com/FINTprosjektet/fint-consumer/common/utils"
-	"github.com/FINTprosjektet/fint-consumer/generate"
+	"github.com/FINTLabs/fint-consumer/common/config"
+	"github.com/FINTLabs/fint-consumer/common/github"
+	"github.com/FINTLabs/fint-consumer/common/types"
+	"github.com/FINTLabs/fint-consumer/common/utils"
+	"github.com/FINTLabs/fint-consumer/generate"
 	"github.com/codegangsta/cli"
 )
 

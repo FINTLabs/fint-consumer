@@ -4,7 +4,7 @@ import (
 	"fmt"
 	"os"
 
-	"github.com/FINTprosjektet/fint-consumer/common/github"
+	"github.com/FINTLabs/fint-consumer/common/github"
 	"github.com/antchfx/xquery/xml"
 )
 

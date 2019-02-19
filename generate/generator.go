@@ -8,10 +8,10 @@ import (
 	"strings"
 	"text/template"
 
-	"github.com/FINTprosjektet/fint-consumer/common/config"
-	"github.com/FINTprosjektet/fint-consumer/common/parser"
-	"github.com/FINTprosjektet/fint-consumer/common/types"
-	"github.com/FINTprosjektet/fint-consumer/common/utils"
+	"github.com/FINTLabs/fint-consumer/common/config"
+	"github.com/FINTLabs/fint-consumer/common/parser"
+	"github.com/FINTLabs/fint-consumer/common/types"
+	"github.com/FINTLabs/fint-consumer/common/utils"
 )
 
 var funcMap = template.FuncMap{

@@ -6,9 +6,9 @@ import (
 	"path/filepath"
 	"io/ioutil"
 	"strings"
-	"github.com/FINTprosjektet/fint-consumer/common/github"
-	"github.com/FINTprosjektet/fint-consumer/common/utils"
-	"github.com/FINTprosjektet/fint-consumer/common/config"
+	"github.com/FINTLabs/fint-consumer/common/github"
+	"github.com/FINTLabs/fint-consumer/common/utils"
+	"github.com/FINTLabs/fint-consumer/common/config"
 )
 
 func setupSkeleton(name string) {

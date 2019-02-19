@@ -1,8 +1,8 @@
 package packages
 
 import (
-	"github.com/FINTprosjektet/fint-consumer/common/parser"
-	"github.com/FINTprosjektet/fint-consumer/common/utils"
+	"github.com/FINTLabs/fint-consumer/common/parser"
+	"github.com/FINTLabs/fint-consumer/common/utils"
 )
 
 func DistinctPackageList(owner string, repo string, tag string, filename string, force bool) []string {

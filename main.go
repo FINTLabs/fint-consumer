@@ -11,7 +11,7 @@ func main() {
 	app := cli.NewApp()
 	app.Name = Name
 	app.Version = Version
-	app.Author = "FINTProsjektet"
+	app.Author = "FINTLabs"
 	app.Email = ""
 	app.Usage = "Generates consumer code from EA XMI export. " +
 		"This utility is mainly for internal FINT use, but if you " +

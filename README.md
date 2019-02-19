@@ -1,7 +1,7 @@
 # fint-consumer
 
 [![Docker image](https://fint-slack.azurewebsites.net/api/badge?namespace=jenkins&reponame=fint-consumer)](https://dtr.fintlabs.no/repositories/jenkins/fint-consumer/tags)
-[![Build Status](https://jenkins.fintlabs.no/buildStatus/icon?job=FINTprosjektet/fint-consumer/master)](https://jenkins.fintlabs.no/job/FINTprosjektet/fint-consumer/master)
+[![Build Status](https://jenkins.fintlabs.no/buildStatus/icon?job=FINTLabs/fint-consumer/master)](https://jenkins.fintlabs.no/job/FINTLabs/fint-consumer/master)
 [![MIT license](http://img.shields.io/badge/license-MIT-brightgreen.svg)](http://opensource.org/licenses/MIT)
 
 ## Description
@@ -21,7 +21,7 @@ VERSION:
    2.0.0
 
 AUTHOR:
-   FINTProsjektet
+   FINTLabs
 
 COMMANDS:
      generate      generates consumer code
@@ -32,7 +32,7 @@ COMMANDS:
      help, h       Shows a list of commands or help for one command
 
 GLOBAL OPTIONS:
-   --owner value          Git repository containing model (default: "FINTprosjektet") [$GITHUB_OWNER]
+   --owner value          Git repository containing model (default: "FINTLabs") [$GITHUB_OWNER]
    --repo value           Git repository containing model (default: "fint-informasjonsmodell") [$GITHUB_PROJECT]
    --filename value       File name containing information model (default: "FINT-informasjonsmodell.xml") [$MODEL_FILENAME]
    --tag value, -t value  the tag (version) of the model to generate (default: "latest")
@@ -69,10 +69,10 @@ docker run -v ${pwd}:/src dtr.fintlabs.no/jenkins/fint-consumer:2.0.0 <ARGS>
 To install, use `go get`:
 
 ```bash
-go get -d github.com/FINTprosjektet/fint-consumer
-go install github.com/FINTprosjektet/fint-consumer
+go get -d github.com/FINTLabs/fint-consumer
+go install github.com/FINTLabs/fint-consumer
 ```
 
 ## Author
 
-[FINTProsjektet](https://fintprosjektet.github.io)
+[FINTLabs](https://FINTLabs.github.io)

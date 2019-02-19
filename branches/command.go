@@ -3,7 +3,7 @@ package branches
 import (
 	"fmt"
 
-	"github.com/FINTprosjektet/fint-consumer/common/github"
+	"github.com/FINTLabs/fint-consumer/common/github"
 	"github.com/codegangsta/cli"
 )
 

@@ -5,7 +5,7 @@ import (
 	"os"
 	"gopkg.in/src-d/go-git.v4"
 	"errors"
-	"github.com/FINTprosjektet/fint-consumer/common/utils"
+	"github.com/FINTLabs/fint-consumer/common/utils"
 )
 
 func Clone(name string, cloneUrl string) error  {

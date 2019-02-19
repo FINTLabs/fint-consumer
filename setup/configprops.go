@@ -6,7 +6,7 @@ import (
 	"io/ioutil"
 	"text/template"
 
-	"github.com/FINTprosjektet/fint-consumer/common/types"
+	"github.com/FINTLabs/fint-consumer/common/types"
 )
 
 func getConsumerPropsClass(m []types.Model) string {

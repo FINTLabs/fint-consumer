@@ -7,7 +7,7 @@ import (
 	"strings"
 	"text/template"
 
-	"github.com/FINTprosjektet/fint-consumer/common/types"
+	"github.com/FINTLabs/fint-consumer/common/types"
 )
 
 func getLinkMapperClass(component string, pkg string, models []types.Model) string {
