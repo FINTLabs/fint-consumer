@@ -1,6 +1,5 @@
 # fint-consumer
 
-[![Docker image](https://fint-slack.azurewebsites.net/api/badge?namespace=jenkins&reponame=fint-consumer)](https://dtr.fintlabs.no/repositories/jenkins/fint-consumer/tags)
 [![Build Status](https://jenkins.fintlabs.no/buildStatus/icon?job=FINTLabs/fint-consumer/master)](https://jenkins.fintlabs.no/job/FINTLabs/fint-consumer/master)
 [![MIT license](http://img.shields.io/badge/license-MIT-brightgreen.svg)](http://opensource.org/licenses/MIT)
 
@@ -50,18 +49,18 @@ The downloaded XMI file is put in the `$HOME/.fint-consumer/.cache`. If you don'
 
 ### Binaries
 
-Precompiled binaries are available as [Docker images](https://dtr.fintlabs.no/)
+Precompiled binaries are available as [Docker images](https://cloud.docker.com/u/fint/repository/docker/fint/fint-consumer)
 
 Mount the directory where you want the generated source code to be written as `/src`.
 
 Linux / MacOS:
 ```bash
-docker run -v $(pwd):/src dtr.fintlabs.no/jenkins/fint-consumer:2.0.0 <ARGS>
+docker run -v $(pwd):/src fint/fint-consumer:2.0.0 <ARGS>
 ```
 
 Windows PowerShell:
 ```ps1
-docker run -v ${pwd}:/src dtr.fintlabs.no/jenkins/fint-consumer:2.0.0 <ARGS>
+docker run -v ${pwd}:/src fint/fint-consumer:2.0.0 <ARGS>
 ```
 
 ### Go
@@ -75,4 +74,4 @@ go install github.com/FINTLabs/fint-consumer
 
 ## Author
 
-[FINTLabs](https://FINTLabs.github.io)
+[FINTLabs](https://fintlabs.github.io)
