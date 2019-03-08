@@ -23,6 +23,8 @@ pipeline {
                 sh "docker build --tag fint/fint-consumer:${VERSION} --build-arg VERSION=${VERSION} ."
                 withDockerRegistry([credentialsId: 'asgeir-docker', url: '']) {
                     sh "docker push fint/fint-consumer:${VERSION}"
+                    sh "docker tag fint/fint-consumer:${VERSION} fint/fint-consumer:latest"
+                    sh "docker push fint/fint-consumer:latest"
                 }
             }
         }
