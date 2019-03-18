@@ -257,32 +257,32 @@ public class {{ .Name }}Controller {
     //
     @ExceptionHandler(UpdateEntityMismatchException.class)
     public ResponseEntity handleUpdateEntityMismatch(Exception e) {
-        return ResponseEntity.badRequest().body(e);
+        return ResponseEntity.badRequest().body(ErrorResponse.of(e));
     }
 
     @ExceptionHandler(EntityNotFoundException.class)
     public ResponseEntity handleEntityNotFound(Exception e) {
-        return ResponseEntity.status(HttpStatus.NOT_FOUND).body(e);
+        return ResponseEntity.status(HttpStatus.NOT_FOUND).body(ErrorResponse.of(e));
     }
 
     @ExceptionHandler(CreateEntityMismatchException.class)
     public ResponseEntity handleCreateEntityMismatch(Exception e) {
-        return ResponseEntity.badRequest().body(e);
+        return ResponseEntity.badRequest().body(ErrorResponse.of(e));
     }
 
     @ExceptionHandler(EntityFoundException.class)
     public ResponseEntity handleEntityFound(Exception e) {
-        return ResponseEntity.status(HttpStatus.FOUND).body(e);
+        return ResponseEntity.status(HttpStatus.FOUND).body(ErrorResponse.of(e));
     }
 
     @ExceptionHandler(NameNotFoundException.class)
     public ResponseEntity handleNameNotFound(Exception e) {
-        return ResponseEntity.badRequest().body(e);
+        return ResponseEntity.badRequest().body(ErrorResponse.of(e));
     }
 
     @ExceptionHandler(UnknownHostException.class)
     public ResponseEntity handleUnkownHost(Exception e) {
-        return ResponseEntity.status(HttpStatus.SERVICE_UNAVAILABLE).body(e);
+        return ResponseEntity.status(HttpStatus.SERVICE_UNAVAILABLE).body(ErrorResponse.of(e));
     }
 
 }
