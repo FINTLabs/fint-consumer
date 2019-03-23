@@ -19,6 +19,7 @@ import no.fint.relations.FintResourceCompatibility;
 
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Service;
 
@@ -32,6 +33,7 @@ import {{ GetActionPackage .Package }};
 
 @Slf4j
 @Service
+@ConditionalOnProperty(name = "fint.consumer.cache.disabled.{{ ToLower .Name }}", havingValue = "false", matchIfMissing = true)
 public class {{ .Name }}CacheService extends CacheService<{{ .Name }}Resource> {
 
     public static final String MODEL = {{ .Name }}.class.getSimpleName().toLowerCase();
