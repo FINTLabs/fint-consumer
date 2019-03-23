@@ -48,7 +48,7 @@ import {{ GetActionPackage .Package }};
 @RequestMapping(name = "{{ .Name }}", value = RestEndpoints.{{ ToUpper .Name }}, produces = {FintRelationsMediaType.APPLICATION_HAL_JSON_VALUE, MediaType.APPLICATION_JSON_UTF8_VALUE})
 public class {{ .Name }}Controller {
 
-    @Autowired
+    @Autowired(required = false)
     private {{ .Name }}CacheService cacheService;
 
     @Autowired
@@ -69,8 +69,14 @@ public class {{ .Name }}Controller {
     @Autowired
     private ObjectMapper objectMapper;
 
+    @Autowired
+    private SynchronousEvents synchronousEvents;
+
     @GetMapping("/last-updated")
     public Map<String, String> getLastUpdated(@RequestHeader(name = HeaderConstants.ORG_ID, required = false) String orgId) {
+        if (cacheService == null) {
+            throw new NameNotFoundException("Cache is disabled");
+        }
         if (props.isOverrideOrgId() || orgId == null) {
             orgId = props.getDefaultOrgId();
         }
@@ -80,6 +86,9 @@ public class {{ .Name }}Controller {
 
     @GetMapping("/cache/size")
      public ImmutableMap<String, Integer> getCacheSize(@RequestHeader(name = HeaderConstants.ORG_ID, required = false) String orgId) {
+        if (cacheService == null) {
+            throw new NameNotFoundException("Cache is disabled");
+        }
         if (props.isOverrideOrgId() || orgId == null) {
             orgId = props.getDefaultOrgId();
         }
@@ -91,6 +100,9 @@ public class {{ .Name }}Controller {
             @RequestHeader(name = HeaderConstants.ORG_ID, required = false) String orgId,
             @RequestHeader(name = HeaderConstants.CLIENT, required = false) String client,
             @RequestParam(required = false) Long sinceTimeStamp) {
+        if (cacheService == null) {
+            throw new NameNotFoundException("Cache is disabled");
+        }
         if (props.isOverrideOrgId() || orgId == null) {
             orgId = props.getDefaultOrgId();
         }
@@ -121,7 +133,7 @@ public class {{ .Name }}Controller {
     public {{$.Name}}Resource get{{ $.Name }}By{{ ToTitle $ident.Name }}(
             @PathVariable String id,
             @RequestHeader(name = HeaderConstants.ORG_ID, required = false) String orgId,
-            @RequestHeader(name = HeaderConstants.CLIENT, required = false) String client) {
+            @RequestHeader(name = HeaderConstants.CLIENT, required = false) String client) throws InterruptedException {
         if (props.isOverrideOrgId() || orgId == null) {
             orgId = props.getDefaultOrgId();
         }
@@ -132,15 +144,34 @@ public class {{ .Name }}Controller {
 
         Event event = new Event(orgId, Constants.COMPONENT, {{ GetAction $.Package }}.GET_{{ ToUpper $.Name }}, client);
         event.setQuery("{{ ToLower $ident.Name }}/" + id);
-        fintAuditService.audit(event);
 
-        fintAuditService.audit(event, Status.CACHE);
+        if (cacheService != null) {
+            fintAuditService.audit(event);
 
-        Optional<{{ $.Name }}Resource> {{ ToLower $.Name }} = cacheService.get{{ $.Name }}By{{ ToTitle $ident.Name }}(orgId, id);
+            fintAuditService.audit(event, Status.CACHE);
 
-        fintAuditService.audit(event, Status.CACHE_RESPONSE, Status.SENT_TO_CLIENT);
+            Optional<{{ $.Name }}Resource> {{ ToLower $.Name }} = cacheService.get{{ $.Name }}By{{ ToTitle $ident.Name }}(orgId, id);
 
-        return {{ ToLower $.Name }}.map(linker::toResource).orElseThrow(() -> new EntityNotFoundException(id));
+            fintAuditService.audit(event, Status.CACHE_RESPONSE, Status.SENT_TO_CLIENT);
+
+            return {{ ToLower $.Name }}.map(linker::toResource).orElseThrow(() -> new EntityNotFoundException(id));
+
+        } else {
+            BlockingQueue<Event> queue = synchronousEvents.register(event);
+            consumerEventUtil.send(event);
+
+            Event response = queue.poll(5, TimeUnit.MINUTES);
+
+            if (response == null ||
+                    response.getData() == null ||
+                    response.getData().isEmpty()) throw new EntityNotFoundException(id);
+
+            FakturagrunnlagResource data = objectMapper.convertValue(response.getData().get(0), FakturagrunnlagResource.class);
+
+            fintAuditService.audit(event, Status.SENT_TO_CLIENT);
+
+            return linker.toResource(data);
+        }    
     }
 {{ end }}
 
@@ -275,6 +306,11 @@ public class {{ .Name }}Controller {
     @ExceptionHandler(UnknownHostException.class)
     public ResponseEntity handleUnkownHost(Exception e) {
         return ResponseEntity.status(HttpStatus.SERVICE_UNAVAILABLE).body(ErrorResponse.of(e));
+    }
+
+    @ExceptionHandler(InterruptedException.class)
+    public ResponseEntity handlieInterrupted(Exception e) {
+        return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(ErrorResponse.of(e));
     }
 
 }
