@@ -13,6 +13,7 @@ import no.fint.audit.FintAuditService;
 import no.fint.consumer.config.Constants;
 import no.fint.consumer.config.ConsumerProps;
 import no.fint.consumer.event.ConsumerEventUtil;
+import no.fint.consumer.event.SynchronousEvents;
 import no.fint.consumer.exceptions.*;
 import no.fint.consumer.status.StatusCache;
 import no.fint.consumer.utils.RestEndpoints;
@@ -164,7 +165,7 @@ public class {{ .Name }}Controller {
                     response.getData() == null ||
                     response.getData().isEmpty()) throw new EntityNotFoundException(id);
 
-            FakturagrunnlagResource data = objectMapper.convertValue(response.getData().get(0), FakturagrunnlagResource.class);
+            {{ $.Name }}Resource data = objectMapper.convertValue(response.getData().get(0), {{ $.Name }}Resource.class);
 
             fintAuditService.audit(event, Status.SENT_TO_CLIENT);
 
