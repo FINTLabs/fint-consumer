@@ -176,11 +176,11 @@ public class {{ .Name }}Controller {
                     response.getData() == null ||
                     response.getData().isEmpty()) throw new EntityNotFoundException(id);
 
-            {{ $.Name }}Resource data = objectMapper.convertValue(response.getData().get(0), {{ $.Name }}Resource.class);
+            {{ $.Name }}Resource {{ ToLower $.Name }} = objectMapper.convertValue(response.getData().get(0), {{ $.Name }}Resource.class);
 
             fintAuditService.audit(event, Status.SENT_TO_CLIENT);
 
-            return linker.toResource(data);
+            return linker.toResource({{ ToLower $.Name }});
         }    
     }
 {{ end }}
