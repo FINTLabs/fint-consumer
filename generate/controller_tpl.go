@@ -34,8 +34,8 @@ import java.net.URI;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
-
-import javax.naming.NameNotFoundException;
+import java.util.concurrent.BlockingQueue;
+import java.util.concurrent.TimeUnit;
 
 import {{ resourcePkg .Package }}.{{ .Name }}Resource;
 import {{ resourcePkg .Package }}.{{ .Name }}Resources;
@@ -75,7 +75,7 @@ public class {{ .Name }}Controller {
     @GetMapping("/last-updated")
     public Map<String, String> getLastUpdated(@RequestHeader(name = HeaderConstants.ORG_ID, required = false) String orgId) {
         if (cacheService == null) {
-            throw new NameNotFoundException("Cache is disabled");
+            throw new BadRequestException("Cache is disabled");
         }
         if (props.isOverrideOrgId() || orgId == null) {
             orgId = props.getDefaultOrgId();
@@ -87,7 +87,7 @@ public class {{ .Name }}Controller {
     @GetMapping("/cache/size")
      public ImmutableMap<String, Integer> getCacheSize(@RequestHeader(name = HeaderConstants.ORG_ID, required = false) String orgId) {
         if (cacheService == null) {
-            throw new NameNotFoundException("Cache is disabled");
+            throw new BadRequestException("Cache is disabled");
         }
         if (props.isOverrideOrgId() || orgId == null) {
             orgId = props.getDefaultOrgId();
@@ -101,7 +101,7 @@ public class {{ .Name }}Controller {
             @RequestHeader(name = HeaderConstants.CLIENT, required = false) String client,
             @RequestParam(required = false) Long sinceTimeStamp) {
         if (cacheService == null) {
-            throw new NameNotFoundException("Cache is disabled");
+            throw new BadRequestException("Cache is disabled");
         }
         if (props.isOverrideOrgId() || orgId == null) {
             orgId = props.getDefaultOrgId();
@@ -113,7 +113,6 @@ public class {{ .Name }}Controller {
 
         Event event = new Event(orgId, Constants.COMPONENT, {{ GetAction .Package }}.GET_ALL_{{ ToUpper .Name }}, client);
         fintAuditService.audit(event);
-
         fintAuditService.audit(event, Status.CACHE);
 
         List<{{ .Name }}Resource> {{ ToLower .Name }};
@@ -147,7 +146,6 @@ public class {{ .Name }}Controller {
 
         if (cacheService != null) {
             fintAuditService.audit(event);
-
             fintAuditService.audit(event, Status.CACHE);
 
             Optional<{{ $.Name }}Resource> {{ ToLower $.Name }} = cacheService.get{{ $.Name }}By{{ ToTitle $ident.Name }}(orgId, id);
@@ -237,8 +235,6 @@ public class {{ .Name }}Controller {
             event.setQuery("VALIDATE");
             event.setOperation(Operation.VALIDATE);
         }
-        fintAuditService.audit(event);
-
         consumerEventUtil.send(event);
 
         statusCache.put(event.getCorrId(), event);
@@ -298,8 +294,8 @@ public class {{ .Name }}Controller {
         return ResponseEntity.status(HttpStatus.FOUND).body(ErrorResponse.of(e));
     }
 
-    @ExceptionHandler(NameNotFoundException.class)
-    public ResponseEntity handleNameNotFound(Exception e) {
+    @ExceptionHandler(BadRequestException.class)
+    public ResponseEntity handleBadRequest(Exception e) {
         return ResponseEntity.badRequest().body(ErrorResponse.of(e));
     }
 
