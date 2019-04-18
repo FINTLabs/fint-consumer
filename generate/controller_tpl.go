@@ -76,7 +76,7 @@ public class {{ .Name }}Controller {
     @GetMapping("/last-updated")
     public Map<String, String> getLastUpdated(@RequestHeader(name = HeaderConstants.ORG_ID, required = false) String orgId) {
         if (cacheService == null) {
-            throw new BadRequestException("Cache is disabled");
+            throw new CacheDisabledException("{{ .Name }} cache is disabled.");
         }
         if (props.isOverrideOrgId() || orgId == null) {
             orgId = props.getDefaultOrgId();
@@ -88,7 +88,7 @@ public class {{ .Name }}Controller {
     @GetMapping("/cache/size")
      public ImmutableMap<String, Integer> getCacheSize(@RequestHeader(name = HeaderConstants.ORG_ID, required = false) String orgId) {
         if (cacheService == null) {
-            throw new BadRequestException("Cache is disabled");
+            throw new CacheDisabledException("{{ .Name }} cache is disabled.");
         }
         if (props.isOverrideOrgId() || orgId == null) {
             orgId = props.getDefaultOrgId();
@@ -102,7 +102,7 @@ public class {{ .Name }}Controller {
             @RequestHeader(name = HeaderConstants.CLIENT, required = false) String client,
             @RequestParam(required = false) Long sinceTimeStamp) {
         if (cacheService == null) {
-            throw new BadRequestException("Cache is disabled");
+            throw new CacheDisabledException("{{ .Name }} cache is disabled.");
         }
         if (props.isOverrideOrgId() || orgId == null) {
             orgId = props.getDefaultOrgId();
@@ -295,9 +295,9 @@ public class {{ .Name }}Controller {
         return ResponseEntity.status(HttpStatus.FOUND).body(ErrorResponse.of(e));
     }
 
-    @ExceptionHandler(BadRequestException.class)
+    @ExceptionHandler(CacheDisabledException.class)
     public ResponseEntity handleBadRequest(Exception e) {
-        return ResponseEntity.badRequest().body(ErrorResponse.of(e));
+        return ResponseEntity.status(HttpStatus.SERVICE_UNAVAILABLE).body(ErrorResponse.of(e));
     }
 
     @ExceptionHandler(UnknownHostException.class)
