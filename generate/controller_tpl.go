@@ -140,10 +140,10 @@ public class {{ .Name }}Controller {
         if (client == null) {
             client = props.getDefaultClient();
         }
-        log.debug("{{ ToTitle $ident.Name }}: {}, OrgId: {}, Client: {}", id, orgId, client);
+        log.debug("{{ $ident.Name }}: {}, OrgId: {}, Client: {}", id, orgId, client);
 
         Event event = new Event(orgId, Constants.COMPONENT, {{ GetAction $.Package }}.GET_{{ ToUpper $.Name }}, client);
-        event.setQuery("{{ ToLower $ident.Name }}/" + id);
+        event.setQuery("{{ $ident.Name }}/" + id);
 
         if (cacheService != null) {
             fintAuditService.audit(event);
