@@ -77,7 +77,8 @@ public class {{ .Name }}CacheService extends CacheService<{{ .Name }}Resource> {
 		populateCache(orgId);
 	}
 
-    private void populateCache(String orgId) {
+    @Override
+    public void populateCache(String orgId) {
 		log.info("Populating {{ .Name }} cache for {}", orgId);
         Event event = new Event(orgId, Constants.COMPONENT, {{ GetAction .Package}}.GET_ALL_{{ ToUpper .Name }}, Constants.CACHE_SERVICE);
         consumerEventUtil.send(event);
