@@ -90,6 +90,15 @@ var Commands = []cli.Command{
 				Name:  "includePerson",
 				Usage: "Include person model",
 			},
+			cli.StringFlag{
+				Name:  "branch",
+				Usage: "branch of skeleton project to use",
+				Value: "master",
+			},
+			cli.StringFlag{
+				Name:  "tag",
+				Usage: "tag of skeleton project to use",
+			},
 		},
 	},
 }

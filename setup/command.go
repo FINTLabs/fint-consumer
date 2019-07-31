@@ -34,7 +34,14 @@ func CmdSetupConsumer(c *cli.Context) {
 	component := c.String("component")
 	verfifyParameter(component, "Component parameter missing!")
 
-	setupSkeleton(name)
+	var ref string
+	if c.String("tag") != "" {
+		ref = "refs/tags/" + c.String("tag")
+	} else {
+		ref = "refs/heads/" + c.String("branch")
+	}
+
+	setupSkeleton(name, ref)
 	generate.Generate(c.GlobalString("owner"), c.GlobalString("repo"), tag, c.GlobalString("filename"), force)
 
 	addModels(component, pkg, name)
