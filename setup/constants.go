@@ -15,7 +15,7 @@ var funcMap = template.FuncMap{
 	"ToLower": strings.ToLower,
 	"ToUpper": strings.ToUpper,
 	"GetInitialRate": func(i int) string {
-		rate := (i * 10000) + 60000
+		rate := (i * 10000) + 900000
 		return strconv.Itoa(rate)
 	},
 }
