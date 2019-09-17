@@ -1,0 +1,1 @@
+docker build -t fint-consumer --build-arg VERSION=0.$(Get-Date -Format yyMMdd.HHmm) .
