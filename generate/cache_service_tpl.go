@@ -14,7 +14,6 @@ import no.fint.consumer.config.ConsumerProps;
 import no.fint.consumer.event.ConsumerEventUtil;
 import no.fint.event.model.Event;
 import no.fint.event.model.ResponseStatus;
-import no.fint.model.felles.kompleksedatatyper.Identifikator;
 import no.fint.relations.FintResourceCompatibility;
 
 import org.springframework.beans.factory.annotation.Autowired;
@@ -29,6 +28,7 @@ import java.util.Optional;
 import {{ .Package }}.{{ .Name }};
 import {{ resourcePkg .Package }}.{{ .Name }}Resource;
 import {{ GetActionPackage .Package }};
+import {{ GetIdentifikatorPackage .Imports }};
 
 @Slf4j
 @Service
