@@ -184,7 +184,7 @@ public class {{ .Name }}Controller {
             @RequestHeader(HeaderConstants.CLIENT) String client) {
         log.debug("/status/{} for {} from {}", id, orgId, client);
         if (!statusCache.containsKey(id)) {
-            return ResponseEntity.notFound().build();
+            return ResponseEntity.status(HttpStatus.GONE).build();
         }
         Event event = statusCache.get(id);
         log.debug("Event: {}", event);
