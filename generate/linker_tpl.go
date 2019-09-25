@@ -9,6 +9,7 @@ import no.fint.relations.FintLinker;
 import org.springframework.stereotype.Component;
 
 import java.util.Collection;
+import java.util.stream.IntStream;
 
 import static java.util.Objects.isNull;
 import static org.springframework.util.StringUtils.isEmpty;
@@ -42,7 +43,17 @@ public class {{ .Name }}Linker extends FintLinker<{{ .Name }}Resource> {
         {{ end }}
         return null;
     }
-    
+
+    int[] hashCodes({{ $.Name }}Resource {{ ToLower $.Name }}) {
+        IntStream.Builder builder = IntStream.builder();
+        {{ range $i, $ident := .Identifiers -}}
+        if (!isNull({{ ToLower $.Name  }}.get{{ ToTitle $ident.Name }}()) && !isEmpty({{ ToLower $.Name  }}.get{{ ToTitle $ident.Name }}().getIdentifikatorverdi())) {
+            builder.add({{ ToLower $.Name  }}.get{{ ToTitle $ident.Name }}().getIdentifikatorverdi().hashCode());
+        }
+        {{ end }}
+        return builder.build().toArray();
+    }
+
 }
 
 `

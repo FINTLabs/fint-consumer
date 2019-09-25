@@ -9,29 +9,33 @@ import com.fasterxml.jackson.databind.SerializationFeature;
 import lombok.extern.slf4j.Slf4j;
 
 import no.fint.cache.CacheService;
+import no.fint.cache.model.CacheObject;
 import no.fint.consumer.config.Constants;
 import no.fint.consumer.config.ConsumerProps;
 import no.fint.consumer.event.ConsumerEventUtil;
 import no.fint.event.model.Event;
 import no.fint.event.model.ResponseStatus;
-import no.fint.model.felles.kompleksedatatyper.Identifikator;
 import no.fint.relations.FintResourceCompatibility;
 
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Service;
 
 import javax.annotation.PostConstruct;
 import java.util.List;
 import java.util.Optional;
+import java.util.stream.Collectors;
 
 import {{ .Package }}.{{ .Name }};
 import {{ resourcePkg .Package }}.{{ .Name }}Resource;
 import {{ GetActionPackage .Package }};
+import {{ GetIdentifikatorPackage .Imports }};
 
 @Slf4j
 @Service
+@ConditionalOnProperty(name = "fint.consumer.cache.disabled.{{ ToLower .Name }}", havingValue = "false", matchIfMissing = true)
 public class {{ .Name }}CacheService extends CacheService<{{ .Name }}Resource> {
 
     public static final String MODEL = {{ .Name }}.class.getSimpleName().toLowerCase();
@@ -77,7 +81,8 @@ public class {{ .Name }}CacheService extends CacheService<{{ .Name }}Resource> {
 		populateCache(orgId);
 	}
 
-    private void populateCache(String orgId) {
+    @Override
+    public void populateCache(String orgId) {
 		log.info("Populating {{ .Name }} cache for {}", orgId);
         Event event = new Event(orgId, Constants.COMPONENT, {{ GetAction .Package}}.GET_ALL_{{ ToUpper .Name }}, Constants.CACHE_SERVICE);
         consumerEventUtil.send(event);
@@ -85,7 +90,8 @@ public class {{ .Name }}CacheService extends CacheService<{{ .Name }}Resource> {
 
 {{ range $i, $ident := .Identifiers }}
     public Optional<{{ $.Name }}Resource> get{{ $.Name }}By{{ ToTitle $ident.Name }}(String orgId, String {{ $ident.Name }}) {
-        return getOne(orgId, (resource) -> Optional
+        return getOne(orgId, {{ $ident.Name }}.hashCode(),
+            (resource) -> Optional
                 .ofNullable(resource)
                 .map({{ $.Name }}Resource::get{{ ToTitle $ident.Name }})
                 .map(Identifikator::getIdentifikatorverdi)
@@ -106,14 +112,22 @@ public class {{ .Name }}CacheService extends CacheService<{{ .Name }}Resource> {
         data.forEach(linker::mapLinks);
         if ({{ GetAction .Package }}.valueOf(event.getAction()) == {{ GetAction .Package }}.UPDATE_{{ ToUpper .Name }}) {
             if (event.getResponseStatus() == ResponseStatus.ACCEPTED || event.getResponseStatus() == ResponseStatus.CONFLICT) {
-                add(event.getOrgId(), data);
-                log.info("Added {} elements to cache for {}", data.size(), event.getOrgId());
+                List<CacheObject<{{ .Name }}Resource>> cacheObjects = data
+                    .stream()
+                    .map(i -> new CacheObject<>(i, linker.hashCodes(i)))
+                    .collect(Collectors.toList());
+                addCache(event.getOrgId(), cacheObjects);
+                log.info("Added {} cache objects to cache for {}", cacheObjects.size(), event.getOrgId());
             } else {
                 log.debug("Ignoring payload for {} with response status {}", event.getOrgId(), event.getResponseStatus());
             }
         } else {
-            update(event.getOrgId(), data);
-            log.info("Updated cache for {} with {} elements", event.getOrgId(), data.size());
+            List<CacheObject<{{ .Name }}Resource>> cacheObjects = data
+                    .stream()
+                    .map(i -> new CacheObject<>(i, linker.hashCodes(i)))
+                    .collect(Collectors.toList());
+            updateCache(event.getOrgId(), cacheObjects);
+            log.info("Updated cache for {} with {} cache objects", event.getOrgId(), cacheObjects.size());
         }
     }
 }

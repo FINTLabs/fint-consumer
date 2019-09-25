@@ -18,6 +18,14 @@ var funcMap = template.FuncMap{
 	"ToLower": strings.ToLower,
 	"ToUpper": strings.ToUpper,
 	"ToTitle": strings.Title,
+	"GetIdentifikatorPackage": func(imp []string) string {
+		for _, p := range imp {
+			if strings.HasSuffix(p, ".Identifikator") {
+				return p
+			}
+		}
+		return "java.util.Random"
+	},
 	"GetActionPackage": func(p string) string {
 		a := strings.Split(p, ".")
 		action := a[len(a)-1]

@@ -2,16 +2,17 @@ package setup
 
 import (
 	"fmt"
+	"io/ioutil"
 	"os"
 	"path/filepath"
-	"io/ioutil"
 	"strings"
+
+	"github.com/FINTLabs/fint-consumer/common/config"
 	"github.com/FINTLabs/fint-consumer/common/github"
 	"github.com/FINTLabs/fint-consumer/common/utils"
-	"github.com/FINTLabs/fint-consumer/common/config"
 )
 
-func setupSkeleton(name string) {
+func setupSkeleton(name string, reference string) {
 
 	consumerName := getConsumerName(name)
 	shortConsumerName := strings.Replace(consumerName, "fint-", "", -1)
@@ -21,9 +22,9 @@ func setupSkeleton(name string) {
 
 	os.RemoveAll(utils.GetWorkingDir(consumerName))
 
-	fmt.Printf("  > Cloning repository %s ...\n", config.CONSUMER_SKELETON_URL)
+	fmt.Printf("  > Cloning repository %s, %s ...\n", config.CONSUMER_SKELETON_URL, reference)
 
-	err := github.Clone(consumerName, config.CONSUMER_SKELETON_URL)
+	err := github.Clone(consumerName, config.CONSUMER_SKELETON_URL, reference)
 	if err != nil {
 		fmt.Println(err)
 		os.Exit(-1)
@@ -33,7 +34,7 @@ func setupSkeleton(name string) {
 	os.RemoveAll(utils.GetDotGitDir(consumerName))
 
 	fmt.Println("--> Renaming project ...")
-	err = filepath.Walk(utils.GetWorkingDir(consumerName), func (path string, fi os.FileInfo, err error) error {
+	err = filepath.Walk(utils.GetWorkingDir(consumerName), func(path string, fi os.FileInfo, err error) error {
 		if err != nil {
 			return err
 		}

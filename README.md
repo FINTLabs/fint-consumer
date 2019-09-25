@@ -55,12 +55,12 @@ Mount the directory where you want the generated source code to be written as `/
 
 Linux / MacOS:
 ```bash
-docker run -v $(pwd):/src fint/fint-consumer:2.0.0 <ARGS>
+docker run -v $(pwd):/src fint/fint-consumer:2.1.0 <ARGS>
 ```
 
 Windows PowerShell:
 ```ps1
-docker run -v ${pwd}:/src fint/fint-consumer:2.0.0 <ARGS>
+docker run -v ${pwd}:/src fint/fint-consumer:2.1.0 <ARGS>
 ```
 
 ### Go

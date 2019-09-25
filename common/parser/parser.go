@@ -51,10 +51,10 @@ func GetClasses(owner string, repo string, tag string, filename string, force bo
 	}
 
 	for i := range classes {
-		classes[i].Imports = getImports(classes[i], packageMap)
 		classes[i].Using = getUsing(classes[i], packageMap)
 		classes[i].Identifiable = identifiableFromExtends(classes[i], classMap)
 		classes[i].Identifiers = getIdentifiers(classes[i], classMap)
+		classes[i].Imports = getImports(classes[i], packageMap)
 		javaPackageClassMap[classes[i].Package] = append(javaPackageClassMap[classes[i].Package], classes[i])
 		csPackageClassMap[classes[i].Namespace] = append(csPackageClassMap[classes[i].Namespace], classes[i])
 	}
@@ -131,6 +131,10 @@ func getImports(c types.Class, imports map[string]types.Import) []string {
 
 	if len(c.Extends) > 0 {
 		imps = append(imps, imports[c.Extends].Java)
+	}
+
+	if c.Identifiable {
+		imps = append(imps, imports["Identifikator"].Java)
 	}
 
 	return utils.Distinct(utils.TrimArray(imps))
