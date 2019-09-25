@@ -10,6 +10,7 @@ import lombok.extern.slf4j.Slf4j;
 
 import no.fint.audit.FintAuditService;
 
+import no.fint.cache.exceptions.*;
 import no.fint.consumer.config.Constants;
 import no.fint.consumer.config.ConsumerProps;
 import no.fint.consumer.event.ConsumerEventUtil;
@@ -312,9 +313,9 @@ public class {{ .Name }}Controller {
         return ResponseEntity.status(HttpStatus.SERVICE_UNAVAILABLE).body(ErrorResponse.of(e));
     }
 
-    @ExceptionHandler(InterruptedException.class)
-    public ResponseEntity handlieInterrupted(Exception e) {
-        return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(ErrorResponse.of(e));
+    @ExceptionHandler(CacheNotFoundException.class)
+    public ResponseEntity handleCacheNotFound(Exception e) {
+        return ResponseEntity.status(HttpStatus.SERVICE_UNAVAILABLE).body(ErrorResponse.of(e));
     }
 
 }
