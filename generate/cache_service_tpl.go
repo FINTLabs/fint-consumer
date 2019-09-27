@@ -95,7 +95,7 @@ public class {{ .Name }}CacheService extends CacheService<{{ .Name }}Resource> {
                 .ofNullable(resource)
                 .map({{ $.Name }}Resource::get{{ ToTitle $ident.Name }})
                 .map(Identifikator::getIdentifikatorverdi)
-                .map(_id -> _id.equals({{ $ident.Name }}))
+                .map({{ $ident.Name }}::equals)
                 .orElse(false));
     }
 {{ end }}
