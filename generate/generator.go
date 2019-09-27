@@ -39,7 +39,7 @@ var funcMap = template.FuncMap{
 		return action
 	},
 	"resourcePkg": func(s string) string {
-		return strings.Replace(s, "model", "model.resource", -1)
+		return strings.Replace(s, ".model.", ".model.resource.", -1)
 	},
 	"modelPkg": func(s string) string {
 		l := strings.Split(s, ".")
