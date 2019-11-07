@@ -9,7 +9,7 @@ import (
 	"github.com/FINTLabs/fint-consumer/common/document"
 	"github.com/FINTLabs/fint-consumer/common/types"
 	"github.com/FINTLabs/fint-consumer/common/utils"
-	"github.com/antchfx/xquery/xml"
+	xmlquery "github.com/antchfx/xquery/xml"
 )
 
 func GetClasses(owner string, repo string, tag string, filename string, force bool) ([]types.Class, map[string]types.Import, map[string][]types.Class, map[string][]types.Class) {
@@ -59,7 +59,32 @@ func GetClasses(owner string, repo string, tag string, filename string, force bo
 		csPackageClassMap[classes[i].Namespace] = append(csPackageClassMap[classes[i].Namespace], classes[i])
 	}
 
+	for i := range classes {
+		if !classes[i].Writable {
+			classes[i].Writable = getWritableFromExtends(classes[i], classMap)
+		}
+	}
+
 	return classes, packageMap, javaPackageClassMap, csPackageClassMap
+}
+
+func getWritableFromExtends(class types.Class, classMap map[string]types.Class) bool {
+
+	if len(class.Extends) > 0 {
+		extendedClass := classMap[class.Extends]
+		if extendedClass.Writable {
+			return true
+		}
+
+		for len(extendedClass.Extends) > 0 {
+			extendedClass = classMap[extendedClass.Extends]
+			if extendedClass.Writable {
+				return true
+			}
+		}
+	}
+
+	return false
 }
 
 func identifiableFromExtends(class types.Class, classMap map[string]types.Class) bool {

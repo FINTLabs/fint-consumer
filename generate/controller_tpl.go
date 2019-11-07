@@ -178,6 +178,7 @@ public class {{ .Name }}Controller {
 {{ end }}
 
 {{ if .Writable }}
+    // Writable class
     @GetMapping("/status/{id}")
     public ResponseEntity getStatus(
             @PathVariable String id,
