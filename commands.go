@@ -9,7 +9,7 @@ import (
 	"github.com/FINTLabs/fint-consumer/packages"
 	"github.com/FINTLabs/fint-consumer/setup"
 	"github.com/FINTLabs/fint-consumer/tags"
-	"github.com/codegangsta/cli"
+	"github.com/urfave/cli"
 )
 
 var GlobalFlags = []cli.Flag{

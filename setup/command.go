@@ -13,7 +13,7 @@ import (
 	"github.com/FINTLabs/fint-consumer/common/types"
 	"github.com/FINTLabs/fint-consumer/common/utils"
 	"github.com/FINTLabs/fint-consumer/generate"
-	"github.com/codegangsta/cli"
+	"github.com/urfave/cli"
 )
 
 func CmdSetupConsumer(c *cli.Context) {

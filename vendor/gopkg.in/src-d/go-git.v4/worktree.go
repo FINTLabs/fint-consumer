@@ -8,30 +8,37 @@ import (
 	stdioutil "io/ioutil"
 	"os"
 	"path/filepath"
+	"strings"
+	"sync"
 
-	"gopkg.in/src-d/go-billy.v3/util"
 	"gopkg.in/src-d/go-git.v4/config"
 	"gopkg.in/src-d/go-git.v4/plumbing"
 	"gopkg.in/src-d/go-git.v4/plumbing/filemode"
+	"gopkg.in/src-d/go-git.v4/plumbing/format/gitignore"
 	"gopkg.in/src-d/go-git.v4/plumbing/format/index"
 	"gopkg.in/src-d/go-git.v4/plumbing/object"
 	"gopkg.in/src-d/go-git.v4/plumbing/storer"
 	"gopkg.in/src-d/go-git.v4/utils/ioutil"
 	"gopkg.in/src-d/go-git.v4/utils/merkletrie"
 
-	"gopkg.in/src-d/go-billy.v3"
+	"gopkg.in/src-d/go-billy.v4"
+	"gopkg.in/src-d/go-billy.v4/util"
 )
 
 var (
-	ErrWorktreeNotClean  = errors.New("worktree is not clean")
-	ErrSubmoduleNotFound = errors.New("submodule not found")
-	ErrUnstaggedChanges  = errors.New("worktree contains unstagged changes")
+	ErrWorktreeNotClean     = errors.New("worktree is not clean")
+	ErrSubmoduleNotFound    = errors.New("submodule not found")
+	ErrUnstagedChanges      = errors.New("worktree contains unstaged changes")
+	ErrGitModulesSymlink    = errors.New(gitmodulesFile + " is a symlink")
+	ErrNonFastForwardUpdate = errors.New("non-fast-forward update")
 )
 
 // Worktree represents a git worktree.
 type Worktree struct {
 	// Filesystem underlying filesystem.
 	Filesystem billy.Filesystem
+	// External excludes not found in the repository .gitignore
+	Excludes []gitignore.Pattern
 
 	r *Repository
 }
@@ -69,6 +76,7 @@ func (w *Worktree) PullContext(ctx context.Context, o *PullOptions) error {
 		Depth:      o.Depth,
 		Auth:       o.Auth,
 		Progress:   o.Progress,
+		Force:      o.Force,
 	})
 
 	updated := true
@@ -95,7 +103,7 @@ func (w *Worktree) PullContext(ctx context.Context, o *PullOptions) error {
 		}
 
 		if !ff {
-			return fmt.Errorf("non-fast-forward update")
+			return ErrNonFastForwardUpdate
 		}
 	}
 
@@ -107,7 +115,10 @@ func (w *Worktree) PullContext(ctx context.Context, o *PullOptions) error {
 		return err
 	}
 
-	if err := w.Reset(&ResetOptions{Commit: ref.Hash()}); err != nil {
+	if err := w.Reset(&ResetOptions{
+		Mode:   MergeReset,
+		Commit: ref.Hash(),
+	}); err != nil {
 		return err
 	}
 
@@ -142,17 +153,6 @@ func (w *Worktree) Checkout(opts *CheckoutOptions) error {
 		}
 	}
 
-	if !opts.Force {
-		unstaged, err := w.containsUnstagedChanges()
-		if err != nil {
-			return err
-		}
-
-		if unstaged {
-			return ErrUnstaggedChanges
-		}
-	}
-
 	c, err := w.getCommitFromCheckoutOptions(opts)
 	if err != nil {
 		return err
@@ -161,6 +161,8 @@ func (w *Worktree) Checkout(opts *CheckoutOptions) error {
 	ro := &ResetOptions{Commit: c, Mode: MergeReset}
 	if opts.Force {
 		ro.Mode = HardReset
+	} else if opts.Keep {
+		ro.Mode = SoftReset
 	}
 
 	if !opts.Hash.IsZero() && !opts.Create {
@@ -266,11 +268,89 @@ func (w *Worktree) Reset(opts *ResetOptions) error {
 		}
 
 		if unstaged {
-			return ErrUnstaggedChanges
+			return ErrUnstagedChanges
 		}
 	}
 
-	changes, err := w.diffCommitWithStaging(opts.Commit, true)
+	if err := w.setHEADCommit(opts.Commit); err != nil {
+		return err
+	}
+
+	if opts.Mode == SoftReset {
+		return nil
+	}
+
+	t, err := w.getTreeFromCommitHash(opts.Commit)
+	if err != nil {
+		return err
+	}
+
+	if opts.Mode == MixedReset || opts.Mode == MergeReset || opts.Mode == HardReset {
+		if err := w.resetIndex(t); err != nil {
+			return err
+		}
+	}
+
+	if opts.Mode == MergeReset || opts.Mode == HardReset {
+		if err := w.resetWorktree(t); err != nil {
+			return err
+		}
+	}
+
+	return nil
+}
+
+func (w *Worktree) resetIndex(t *object.Tree) error {
+	idx, err := w.r.Storer.Index()
+	if err != nil {
+		return err
+	}
+	b := newIndexBuilder(idx)
+
+	changes, err := w.diffTreeWithStaging(t, true)
+	if err != nil {
+		return err
+	}
+
+	for _, ch := range changes {
+		a, err := ch.Action()
+		if err != nil {
+			return err
+		}
+
+		var name string
+		var e *object.TreeEntry
+
+		switch a {
+		case merkletrie.Modify, merkletrie.Insert:
+			name = ch.To.String()
+			e, err = t.FindEntry(name)
+			if err != nil {
+				return err
+			}
+		case merkletrie.Delete:
+			name = ch.From.String()
+		}
+
+		b.Remove(name)
+		if e == nil {
+			continue
+		}
+
+		b.Add(&index.Entry{
+			Name: name,
+			Hash: e.Hash,
+			Mode: e.Mode,
+		})
+
+	}
+
+	b.Write(idx)
+	return w.r.Storer.SetIndex(idx)
+}
+
+func (w *Worktree) resetWorktree(t *object.Tree) error {
+	changes, err := w.diffStagingWithWorktree(true)
 	if err != nil {
 		return err
 	}
@@ -279,32 +359,68 @@ func (w *Worktree) Reset(opts *ResetOptions) error {
 	if err != nil {
 		return err
 	}
-
-	t, err := w.getTreeFromCommitHash(opts.Commit)
-	if err != nil {
-		return err
-	}
+	b := newIndexBuilder(idx)
 
 	for _, ch := range changes {
-		if err := w.checkoutChange(ch, t, idx); err != nil {
+		if err := w.checkoutChange(ch, t, b); err != nil {
 			return err
 		}
 	}
 
-	if err := w.r.Storer.SetIndex(idx); err != nil {
+	b.Write(idx)
+	return w.r.Storer.SetIndex(idx)
+}
+
+func (w *Worktree) checkoutChange(ch merkletrie.Change, t *object.Tree, idx *indexBuilder) error {
+	a, err := ch.Action()
+	if err != nil {
 		return err
 	}
 
-	return w.setHEADCommit(opts.Commit)
+	var e *object.TreeEntry
+	var name string
+	var isSubmodule bool
+
+	switch a {
+	case merkletrie.Modify, merkletrie.Insert:
+		name = ch.To.String()
+		e, err = t.FindEntry(name)
+		if err != nil {
+			return err
+		}
+
+		isSubmodule = e.Mode == filemode.Submodule
+	case merkletrie.Delete:
+		return rmFileAndDirIfEmpty(w.Filesystem, ch.From.String())
+	}
+
+	if isSubmodule {
+		return w.checkoutChangeSubmodule(name, a, e, idx)
+	}
+
+	return w.checkoutChangeRegularFile(name, a, t, e, idx)
 }
 
 func (w *Worktree) containsUnstagedChanges() (bool, error) {
-	ch, err := w.diffStagingWithWorktree()
+	ch, err := w.diffStagingWithWorktree(false)
 	if err != nil {
 		return false, err
 	}
 
-	return len(ch) != 0, nil
+	for _, c := range ch {
+		a, err := c.Action()
+		if err != nil {
+			return false, err
+		}
+
+		if a == merkletrie.Insert {
+			continue
+		}
+
+		return true, nil
+	}
+
+	return false, nil
 }
 
 func (w *Worktree) setHEADCommit(commit plumbing.Hash) error {
@@ -331,46 +447,10 @@ func (w *Worktree) setHEADCommit(commit plumbing.Hash) error {
 	return w.r.Storer.SetReference(branch)
 }
 
-func (w *Worktree) checkoutChange(ch merkletrie.Change, t *object.Tree, idx *index.Index) error {
-	a, err := ch.Action()
-	if err != nil {
-		return err
-	}
-
-	var e *object.TreeEntry
-	var name string
-	var isSubmodule bool
-
-	switch a {
-	case merkletrie.Modify, merkletrie.Insert:
-		name = ch.To.String()
-		e, err = t.FindEntry(name)
-		if err != nil {
-			return err
-		}
-
-		isSubmodule = e.Mode == filemode.Submodule
-	case merkletrie.Delete:
-		name = ch.From.String()
-		ie, err := idx.Entry(name)
-		if err != nil {
-			return err
-		}
-
-		isSubmodule = ie.Mode == filemode.Submodule
-	}
-
-	if isSubmodule {
-		return w.checkoutChangeSubmodule(name, a, e, idx)
-	}
-
-	return w.checkoutChangeRegularFile(name, a, t, e, idx)
-}
-
 func (w *Worktree) checkoutChangeSubmodule(name string,
 	a merkletrie.Action,
 	e *object.TreeEntry,
-	idx *index.Index,
+	idx *indexBuilder,
 ) error {
 	switch a {
 	case merkletrie.Modify:
@@ -383,17 +463,7 @@ func (w *Worktree) checkoutChangeSubmodule(name string,
 			return nil
 		}
 
-		if err := w.rmIndexFromFile(name, idx); err != nil {
-			return err
-		}
-
-		if err := w.addIndexFromTreeEntry(name, e, idx); err != nil {
-			return err
-		}
-
-		// TODO: the submodule update should be reviewed as reported at:
-		// https://github.com/src-d/go-git/issues/415
-		return sub.update(context.TODO(), &SubmoduleUpdateOptions{}, e.Hash)
+		return w.addIndexFromTreeEntry(name, e, idx)
 	case merkletrie.Insert:
 		mode, err := e.Mode.ToOSFileMode()
 		if err != nil {
@@ -405,12 +475,6 @@ func (w *Worktree) checkoutChangeSubmodule(name string,
 		}
 
 		return w.addIndexFromTreeEntry(name, e, idx)
-	case merkletrie.Delete:
-		if err := rmFileAndDirIfEmpty(w.Filesystem, name); err != nil {
-			return err
-		}
-
-		return w.rmIndexFromFile(name, idx)
 	}
 
 	return nil
@@ -420,13 +484,11 @@ func (w *Worktree) checkoutChangeRegularFile(name string,
 	a merkletrie.Action,
 	t *object.Tree,
 	e *object.TreeEntry,
-	idx *index.Index,
+	idx *indexBuilder,
 ) error {
 	switch a {
 	case merkletrie.Modify:
-		if err := w.rmIndexFromFile(name, idx); err != nil {
-			return err
-		}
+		idx.Remove(name)
 
 		// to apply perm changes the file is deleted, billy doesn't implement
 		// chmod
@@ -446,15 +508,15 @@ func (w *Worktree) checkoutChangeRegularFile(name string,
 		}
 
 		return w.addIndexFromFile(name, e.Hash, idx)
-	case merkletrie.Delete:
-		if err := rmFileAndDirIfEmpty(w.Filesystem, name); err != nil {
-			return err
-		}
-
-		return w.rmIndexFromFile(name, idx)
 	}
 
 	return nil
+}
+
+var copyBufferPool = sync.Pool{
+	New: func() interface{} {
+		return make([]byte, 32*1024)
+	},
 }
 
 func (w *Worktree) checkoutFile(f *object.File) (err error) {
@@ -480,8 +542,9 @@ func (w *Worktree) checkoutFile(f *object.File) (err error) {
 	}
 
 	defer ioutil.CheckClose(to, &err)
-
-	_, err = io.Copy(to, from)
+	buf := copyBufferPool.Get().([]byte)
+	_, err = io.CopyBuffer(to, from, buf)
+	copyBufferPool.Put(buf)
 	return
 }
 
@@ -499,20 +562,37 @@ func (w *Worktree) checkoutFileSymlink(f *object.File) (err error) {
 	}
 
 	err = w.Filesystem.Symlink(string(bytes), f.Name)
+
+	// On windows, this might fail.
+	// Follow Git on Windows behavior by writing the link as it is.
+	if err != nil && isSymlinkWindowsNonAdmin(err) {
+		mode, _ := f.Mode.ToOSFileMode()
+
+		to, err := w.Filesystem.OpenFile(f.Name, os.O_WRONLY|os.O_CREATE|os.O_TRUNC, mode.Perm())
+		if err != nil {
+			return err
+		}
+
+		defer ioutil.CheckClose(to, &err)
+
+		_, err = to.Write(bytes)
+		return err
+	}
 	return
 }
 
-func (w *Worktree) addIndexFromTreeEntry(name string, f *object.TreeEntry, idx *index.Index) error {
-	idx.Entries = append(idx.Entries, &index.Entry{
+func (w *Worktree) addIndexFromTreeEntry(name string, f *object.TreeEntry, idx *indexBuilder) error {
+	idx.Remove(name)
+	idx.Add(&index.Entry{
 		Hash: f.Hash,
 		Name: name,
 		Mode: filemode.Submodule,
 	})
-
 	return nil
 }
 
-func (w *Worktree) addIndexFromFile(name string, h plumbing.Hash, idx *index.Index) error {
+func (w *Worktree) addIndexFromFile(name string, h plumbing.Hash, idx *indexBuilder) error {
+	idx.Remove(name)
 	fi, err := w.Filesystem.Lstat(name)
 	if err != nil {
 		return err
@@ -536,21 +616,7 @@ func (w *Worktree) addIndexFromFile(name string, h plumbing.Hash, idx *index.Ind
 	if fillSystemInfo != nil {
 		fillSystemInfo(e, fi.Sys())
 	}
-
-	idx.Entries = append(idx.Entries, e)
-	return nil
-}
-
-func (w *Worktree) rmIndexFromFile(name string, idx *index.Index) error {
-	for i, e := range idx.Entries {
-		if e.Name != name {
-			continue
-		}
-
-		idx.Entries = append(idx.Entries[:i], idx.Entries[i+1:]...)
-		return nil
-	}
-
+	idx.Add(e)
 	return nil
 }
 
@@ -561,10 +627,6 @@ func (w *Worktree) getTreeFromCommitHash(commit plumbing.Hash) (*object.Tree, er
 	}
 
 	return c.Tree()
-}
-
-func (w *Worktree) initializeIndex() error {
-	return w.r.Storer.SetIndex(&index.Index{Version: 2})
 }
 
 var fillSystemInfo func(e *index.Entry, sys interface{})
@@ -621,7 +683,18 @@ func (w *Worktree) newSubmodule(fromModules, fromConfig *config.Submodule) *Subm
 	return m
 }
 
+func (w *Worktree) isSymlink(path string) bool {
+	if s, err := w.Filesystem.Lstat(path); err == nil {
+		return s.Mode()&os.ModeSymlink != 0
+	}
+	return false
+}
+
 func (w *Worktree) readGitmodulesFile() (*config.Modules, error) {
+	if w.isSymlink(gitmodulesFile) {
+		return nil, ErrGitModulesSymlink
+	}
+
 	f, err := w.Filesystem.Open(gitmodulesFile)
 	if err != nil {
 		if os.IsNotExist(err) {
@@ -641,20 +714,241 @@ func (w *Worktree) readGitmodulesFile() (*config.Modules, error) {
 	return m, m.Unmarshal(input)
 }
 
+// Clean the worktree by removing untracked files.
+// An empty dir could be removed - this is what  `git clean -f -d .` does.
+func (w *Worktree) Clean(opts *CleanOptions) error {
+	s, err := w.Status()
+	if err != nil {
+		return err
+	}
+
+	root := ""
+	files, err := w.Filesystem.ReadDir(root)
+	if err != nil {
+		return err
+	}
+	return w.doClean(s, opts, root, files)
+}
+
+func (w *Worktree) doClean(status Status, opts *CleanOptions, dir string, files []os.FileInfo) error {
+	for _, fi := range files {
+		if fi.Name() == GitDirName {
+			continue
+		}
+
+		// relative path under the root
+		path := filepath.Join(dir, fi.Name())
+		if fi.IsDir() {
+			if !opts.Dir {
+				continue
+			}
+
+			subfiles, err := w.Filesystem.ReadDir(path)
+			if err != nil {
+				return err
+			}
+			err = w.doClean(status, opts, path, subfiles)
+			if err != nil {
+				return err
+			}
+		} else {
+			if status.IsUntracked(path) {
+				if err := w.Filesystem.Remove(path); err != nil {
+					return err
+				}
+			}
+		}
+	}
+
+	if opts.Dir {
+		return doCleanDirectories(w.Filesystem, dir)
+	}
+	return nil
+}
+
+// GrepResult is structure of a grep result.
+type GrepResult struct {
+	// FileName is the name of file which contains match.
+	FileName string
+	// LineNumber is the line number of a file at which a match was found.
+	LineNumber int
+	// Content is the content of the file at the matching line.
+	Content string
+	// TreeName is the name of the tree (reference name/commit hash) at
+	// which the match was performed.
+	TreeName string
+}
+
+func (gr GrepResult) String() string {
+	return fmt.Sprintf("%s:%s:%d:%s", gr.TreeName, gr.FileName, gr.LineNumber, gr.Content)
+}
+
+// Grep performs grep on a worktree.
+func (w *Worktree) Grep(opts *GrepOptions) ([]GrepResult, error) {
+	if err := opts.Validate(w); err != nil {
+		return nil, err
+	}
+
+	// Obtain commit hash from options (CommitHash or ReferenceName).
+	var commitHash plumbing.Hash
+	// treeName contains the value of TreeName in GrepResult.
+	var treeName string
+
+	if opts.ReferenceName != "" {
+		ref, err := w.r.Reference(opts.ReferenceName, true)
+		if err != nil {
+			return nil, err
+		}
+		commitHash = ref.Hash()
+		treeName = opts.ReferenceName.String()
+	} else if !opts.CommitHash.IsZero() {
+		commitHash = opts.CommitHash
+		treeName = opts.CommitHash.String()
+	}
+
+	// Obtain a tree from the commit hash and get a tracked files iterator from
+	// the tree.
+	tree, err := w.getTreeFromCommitHash(commitHash)
+	if err != nil {
+		return nil, err
+	}
+	fileiter := tree.Files()
+
+	return findMatchInFiles(fileiter, treeName, opts)
+}
+
+// findMatchInFiles takes a FileIter, worktree name and GrepOptions, and
+// returns a slice of GrepResult containing the result of regex pattern matching
+// in content of all the files.
+func findMatchInFiles(fileiter *object.FileIter, treeName string, opts *GrepOptions) ([]GrepResult, error) {
+	var results []GrepResult
+
+	err := fileiter.ForEach(func(file *object.File) error {
+		var fileInPathSpec bool
+
+		// When no pathspecs are provided, search all the files.
+		if len(opts.PathSpecs) == 0 {
+			fileInPathSpec = true
+		}
+
+		// Check if the file name matches with the pathspec. Break out of the
+		// loop once a match is found.
+		for _, pathSpec := range opts.PathSpecs {
+			if pathSpec != nil && pathSpec.MatchString(file.Name) {
+				fileInPathSpec = true
+				break
+			}
+		}
+
+		// If the file does not match with any of the pathspec, skip it.
+		if !fileInPathSpec {
+			return nil
+		}
+
+		grepResults, err := findMatchInFile(file, treeName, opts)
+		if err != nil {
+			return err
+		}
+		results = append(results, grepResults...)
+
+		return nil
+	})
+
+	return results, err
+}
+
+// findMatchInFile takes a single File, worktree name and GrepOptions,
+// and returns a slice of GrepResult containing the result of regex pattern
+// matching in the given file.
+func findMatchInFile(file *object.File, treeName string, opts *GrepOptions) ([]GrepResult, error) {
+	var grepResults []GrepResult
+
+	content, err := file.Contents()
+	if err != nil {
+		return grepResults, err
+	}
+
+	// Split the file content and parse line-by-line.
+	contentByLine := strings.Split(content, "\n")
+	for lineNum, cnt := range contentByLine {
+		addToResult := false
+
+		// Match the patterns and content. Break out of the loop once a
+		// match is found.
+		for _, pattern := range opts.Patterns {
+			if pattern != nil && pattern.MatchString(cnt) {
+				// Add to result only if invert match is not enabled.
+				if !opts.InvertMatch {
+					addToResult = true
+					break
+				}
+			} else if opts.InvertMatch {
+				// If matching fails, and invert match is enabled, add to
+				// results.
+				addToResult = true
+				break
+			}
+		}
+
+		if addToResult {
+			grepResults = append(grepResults, GrepResult{
+				FileName:   file.Name,
+				LineNumber: lineNum + 1,
+				Content:    cnt,
+				TreeName:   treeName,
+			})
+		}
+	}
+
+	return grepResults, nil
+}
+
 func rmFileAndDirIfEmpty(fs billy.Filesystem, name string) error {
 	if err := util.RemoveAll(fs, name); err != nil {
 		return err
 	}
 
-	path := filepath.Dir(name)
-	files, err := fs.ReadDir(path)
+	dir := filepath.Dir(name)
+	return doCleanDirectories(fs, dir)
+}
+
+// doCleanDirectories removes empty subdirs (without files)
+func doCleanDirectories(fs billy.Filesystem, dir string) error {
+	files, err := fs.ReadDir(dir)
 	if err != nil {
 		return err
 	}
-
 	if len(files) == 0 {
-		fs.Remove(path)
+		return fs.Remove(dir)
 	}
-
 	return nil
+}
+
+type indexBuilder struct {
+	entries map[string]*index.Entry
+}
+
+func newIndexBuilder(idx *index.Index) *indexBuilder {
+	entries := make(map[string]*index.Entry, len(idx.Entries))
+	for _, e := range idx.Entries {
+		entries[e.Name] = e
+	}
+	return &indexBuilder{
+		entries: entries,
+	}
+}
+
+func (b *indexBuilder) Write(idx *index.Index) {
+	idx.Entries = idx.Entries[:0]
+	for _, e := range b.entries {
+		idx.Entries = append(idx.Entries, e)
+	}
+}
+
+func (b *indexBuilder) Add(e *index.Entry) {
+	b.entries[e.Name] = e
+}
+
+func (b *indexBuilder) Remove(name string) {
+	delete(b.entries, filepath.ToSlash(name))
 }
