@@ -10,10 +10,10 @@ import org.springframework.stereotype.Component;
 
 import java.util.Collection;
 import java.util.stream.IntStream;
+import java.util.stream.Stream;
 
 import static java.util.Objects.isNull;
 import static org.springframework.util.StringUtils.isEmpty;
-
 
 @Component
 public class {{ .Name }}Linker extends FintLinker<{{ .Name }}Resource> {
@@ -36,12 +36,18 @@ public class {{ .Name }}Linker extends FintLinker<{{ .Name }}Resource> {
 
     @Override
     public String getSelfHref({{ $.Name }}Resource {{ ToLower $.Name  }}) {
+        return getAllSelfHrefs({{ ToLower $.Name  }}).findFirst().orElse(null);
+    }
+
+    @Override
+    public Stream<String> getAllSelfHrefs({{ $.Name }}Resource {{ ToLower $.Name  }}) {
+        Stream.Builder<String> builder = Stream.builder();
         {{ range $i, $ident := .Identifiers -}}
         if (!isNull({{ ToLower $.Name  }}.get{{ ToTitle $ident.Name }}()) && !isEmpty({{ ToLower $.Name  }}.get{{ ToTitle $ident.Name }}().getIdentifikatorverdi())) {
-            return createHrefWithId({{ ToLower $.Name  }}.get{{ ToTitle $ident.Name }}().getIdentifikatorverdi(), "{{ ToLower $ident.Name }}");
+            builder.add(createHrefWithId({{ ToLower $.Name  }}.get{{ ToTitle $ident.Name }}().getIdentifikatorverdi(), "{{ ToLower $ident.Name }}"));
         }
         {{ end }}
-        return null;
+        return builder.build();
     }
 
     int[] hashCodes({{ $.Name }}Resource {{ ToLower $.Name }}) {
