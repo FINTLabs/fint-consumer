@@ -22,6 +22,9 @@ const (
 
 	// CommentNode is a comment node, such as <!-- my comment -->
 	CommentNode
+
+	// allNode is any types of node, used by xpath package only to predicate match.
+	allNode
 )
 
 // NodeNavigator provides cursor model for navigating XML data.
@@ -148,7 +151,7 @@ func Compile(expr string) (*Expr, error) {
 func MustCompile(expr string) *Expr {
 	exp, err := Compile(expr)
 	if err != nil {
-		return nil
+		return &Expr{s: expr, q: nopQuery{}}
 	}
 	return exp
 }
