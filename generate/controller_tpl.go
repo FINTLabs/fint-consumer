@@ -208,7 +208,9 @@ public class {{ .Name }}Controller {
                 URI location = UriComponentsBuilder.fromUriString(linker.getSelfHref(result.get(0))).build().toUri();
                 event.setMessage(location.toString());
                 fintAuditService.audit(event, Status.SENT_TO_CLIENT);
-                return ResponseEntity.created(location).body(linker.toResource(result.get(0)));
+                if (props.isUseCreated())
+                    return ResponseEntity.created(location).body(linker.toResource(result.get(0)));
+                return ResponseEntity.status(HttpStatus.SEE_OTHER).location(location).body(linker.toResource(result.get(0)));
             case ERROR:
                 fintAuditService.audit(event, Status.SENT_TO_CLIENT);
                 return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(event.getResponse());
