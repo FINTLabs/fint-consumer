@@ -95,7 +95,7 @@ public class {{ .Name }}Controller {
         if (props.isOverrideOrgId() || orgId == null) {
             orgId = props.getDefaultOrgId();
         }
-        return ImmutableMap.of("size", cacheService.getAll(orgId).size());
+        return ImmutableMap.of("size", cacheService.getCacheSize(orgId));
     }
 
     @GetMapping
