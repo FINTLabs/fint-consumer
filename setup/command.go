@@ -41,6 +41,8 @@ func CmdSetupConsumer(c *cli.Context) {
 		ref = "refs/heads/" + c.String("branch")
 	}
 
+	version := c.String("version")
+
 	setupSkeleton(name, ref)
 	generate.Generate(c.GlobalString("owner"), c.GlobalString("repo"), tag, c.GlobalString("filename"), force)
 
@@ -55,7 +57,7 @@ func CmdSetupConsumer(c *cli.Context) {
 
 	addModelToGradle(component, name)
 
-	createGradleProperties(tag, name)
+	createGradleProperties(tag, name, version)
 
 	createGradleSettings(name)
 
@@ -175,9 +177,9 @@ func createReadme(app string, version string, tag string, pkg string, component 
 	}
 }
 
-func createGradleProperties(tag string, name string) {
+func createGradleProperties(tag string, name string, version string) {
 	apiVersion := strings.TrimPrefix(tag, "v")
-	content := fmt.Sprintf("version=0.0.0\napiVersion=%s\n", apiVersion)
+	content := fmt.Sprintf("version=%s\napiVersion=%s\n", version, apiVersion)
 	gradleProperties := fmt.Sprintf("%s/gradle.properties", utils.GetWorkingDir(getConsumerName(name)))
 	err := ioutil.WriteFile(gradleProperties, []byte(content), 0644)
 	if err != nil {

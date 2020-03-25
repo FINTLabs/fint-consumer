@@ -99,6 +99,11 @@ var Commands = []cli.Command{
 				Name:  "tag",
 				Usage: "tag of skeleton project to use",
 			},
+			cli.StringFlag{
+				Name:  "version, v",
+				Usage: "Version number of consumer to setup",
+				Value: "0.0.0",
+			},
 		},
 	},
 }
