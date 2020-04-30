@@ -28,9 +28,14 @@ public class {{ .Name }}Linker extends FintLinker<{{ .Name }}Resource> {
 
     @Override
     public {{ .Name }}Resources toResources(Collection<{{ .Name }}Resource> collection) {
+        return toResources(collection.stream(), 0, 0, collection.size());
+    }
+
+    @Override
+    public {{ .Name }}Resources toResources(Stream<{{ .Name }}Resource> stream, int offset, int size, int totalItems) {
         {{ .Name }}Resources resources = new {{ .Name }}Resources();
-        collection.stream().map(this::toResource).forEach(resources::addResource);
-        resources.addSelf(Link.with(self()));
+        stream.map(this::toResource).forEach(resources::addResource);
+        addPagination(resources, offset, size, totalItems);
         return resources;
     }
 
