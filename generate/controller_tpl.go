@@ -1,12 +1,13 @@
 package generate
 
-const CONTROLLER_TEMPLATE = `package no.fint.consumer.models.{{ modelPkg .Package  }}{{ ToLower .Name }};
+const CONTROLLER_TEMPLATE = `package no.fint.consumer.models.{{ modelPkg .Package  }}resources;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.SerializationFeature;
 import com.google.common.collect.ImmutableMap;
 import io.swagger.annotations.Api;
 import lombok.extern.slf4j.Slf4j;
+import org.apache.commons.lang3.StringUtils;
 
 import no.fint.audit.FintAuditService;
 
@@ -31,6 +32,7 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.util.UriComponentsBuilder;
 
+import javax.servlet.http.HttpServletRequest;
 import java.net.UnknownHostException;
 import java.net.URI;
 
@@ -39,6 +41,7 @@ import java.util.Map;
 import java.util.Optional;
 import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.TimeUnit;
+import java.util.stream.Stream;
 
 import {{ resourcePkg .Package }}.{{ .Name }}Resource;
 import {{ resourcePkg .Package }}.{{ .Name }}Resources;
@@ -102,7 +105,10 @@ public class {{ .Name }}Controller {
     public {{ .Name }}Resources get{{ .Name }}(
             @RequestHeader(name = HeaderConstants.ORG_ID, required = false) String orgId,
             @RequestHeader(name = HeaderConstants.CLIENT, required = false) String client,
-            @RequestParam(required = false) Long sinceTimeStamp) {
+            @RequestParam(defaultValue = "0") long sinceTimeStamp,
+            @RequestParam(defaultValue = "0") int size,
+            @RequestParam(defaultValue = "0") int offset,
+            HttpServletRequest request) {
         if (cacheService == null) {
             throw new CacheDisabledException("{{ .Name }} cache is disabled.");
         }
@@ -116,19 +122,24 @@ public class {{ .Name }}Controller {
 
         Event event = new Event(orgId, Constants.COMPONENT, {{ GetAction .Package }}.GET_ALL_{{ ToUpper .Name }}, client);
         event.setOperation(Operation.READ);
+        if (StringUtils.isNotBlank(request.getQueryString())) {
+            event.setQuery("?" + request.getQueryString());
+        }
         fintAuditService.audit(event);
         fintAuditService.audit(event, Status.CACHE);
 
-        List<{{ .Name }}Resource> {{ ToLower .Name }};
-        if (sinceTimeStamp == null) {
-            {{ ToLower .Name }} = cacheService.getAll(orgId);
+        Stream<{{ .Name }}Resource> resources;
+        if (size > 0 && offset >= 0) {
+            resources = cacheService.streamSlice(orgId, offset, size);
+        } else if (sinceTimeStamp > 0) {
+            resources = cacheService.streamSince(orgId, sinceTimeStamp);
         } else {
-            {{ ToLower .Name }} = cacheService.getAll(orgId, sinceTimeStamp);
+            resources = cacheService.streamAll(orgId);
         }
 
         fintAuditService.audit(event, Status.CACHE_RESPONSE, Status.SENT_TO_CLIENT);
 
-        return linker.toResources({{ ToLower .Name }});
+        return linker.toResources(resources, offset, size, cacheService.getCacheSize(orgId));
     }
 
 {{ range $i, $ident := .Identifiers }}
