@@ -2,7 +2,6 @@ package generate
 
 const LINKER_TEMPLATE = `package no.fint.consumer.models.{{ modelPkg .Package  }}{{ ToLower .Name }};
 
-import no.fint.model.resource.Link;
 import {{ resourcePkg .Package }}.{{ .Name }}Resource;
 import {{ resourcePkg .Package }}.{{ .Name }}Resources;
 import no.fint.relations.FintLinker;

@@ -1,6 +1,6 @@
 package generate
 
-const CONTROLLER_TEMPLATE = `package no.fint.consumer.models.{{ modelPkg .Package  }}resources;
+const CONTROLLER_TEMPLATE = `package no.fint.consumer.models.{{ modelPkg .Package  }}{{ ToLower .Name }};
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.SerializationFeature;
@@ -36,7 +36,6 @@ import javax.servlet.http.HttpServletRequest;
 import java.net.UnknownHostException;
 import java.net.URI;
 
-import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 import java.util.concurrent.BlockingQueue;
