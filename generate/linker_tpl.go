@@ -2,7 +2,6 @@ package generate
 
 const LINKER_TEMPLATE = `package no.fint.consumer.models.{{ modelPkg .Package  }}{{ ToLower .Name }};
 
-import no.fint.model.resource.Link;
 import {{ resourcePkg .Package }}.{{ .Name }}Resource;
 import {{ resourcePkg .Package }}.{{ .Name }}Resources;
 import no.fint.relations.FintLinker;
@@ -28,9 +27,14 @@ public class {{ .Name }}Linker extends FintLinker<{{ .Name }}Resource> {
 
     @Override
     public {{ .Name }}Resources toResources(Collection<{{ .Name }}Resource> collection) {
+        return toResources(collection.stream(), 0, 0, collection.size());
+    }
+
+    @Override
+    public {{ .Name }}Resources toResources(Stream<{{ .Name }}Resource> stream, int offset, int size, int totalItems) {
         {{ .Name }}Resources resources = new {{ .Name }}Resources();
-        collection.stream().map(this::toResource).forEach(resources::addResource);
-        resources.addSelf(Link.with(self()));
+        stream.map(this::toResource).forEach(resources::addResource);
+        addPagination(resources, offset, size, totalItems);
         return resources;
     }
 
