@@ -197,44 +197,7 @@ public class {{ .Name }}Controller {
             @RequestHeader(HeaderConstants.ORG_ID) String orgId,
             @RequestHeader(HeaderConstants.CLIENT) String client) {
         log.debug("/status/{} for {} from {}", id, orgId, client);
-        if (!statusCache.containsKey(id)) {
-            return ResponseEntity.status(HttpStatus.GONE).build();
-        }
-        Event event = statusCache.get(id);
-        log.debug("Event: {}", event);
-        log.trace("Data: {}", event.getData());
-        if (!event.getOrgId().equals(orgId)) {
-            return ResponseEntity.badRequest().body(new EventResponse() { { setMessage("Invalid OrgId"); } } );
-        }
-        if (event.getResponseStatus() == null) {
-            return ResponseEntity.status(HttpStatus.ACCEPTED).build();
-        }
-        {{.Name}}Resource result;
-        switch (event.getResponseStatus()) {
-            case ACCEPTED:
-                if (event.getOperation() == Operation.VALIDATE) {
-                    fintAuditService.audit(event, Status.SENT_TO_CLIENT);
-                    return ResponseEntity.ok(event.getResponse());
-                }
-                result = objectMapper.convertValue(event.getData().get(0), {{.Name}}Resource.class);
-                URI location = UriComponentsBuilder.fromUriString(linker.getSelfHref(result)).build().toUri();
-                event.setMessage(location.toString());
-                fintAuditService.audit(event, Status.SENT_TO_CLIENT);
-                if (props.isUseCreated())
-                    return ResponseEntity.created(location).body(linker.toResource(result));
-                return ResponseEntity.status(HttpStatus.SEE_OTHER).location(location).body(linker.toResource(result));
-            case ERROR:
-                fintAuditService.audit(event, Status.SENT_TO_CLIENT);
-                return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(event.getResponse());
-            case CONFLICT:
-                fintAuditService.audit(event, Status.SENT_TO_CLIENT);
-                result = objectMapper.convertValue(event.getData().get(0), {{.Name}}Resource.class);
-                return ResponseEntity.status(HttpStatus.CONFLICT).body(linker.toResource(result));
-            case REJECTED:
-                fintAuditService.audit(event, Status.SENT_TO_CLIENT);
-                return ResponseEntity.badRequest().body(event.getResponse());
-        }
-        return ResponseEntity.status(HttpStatus.ACCEPTED).body(event.getResponse());
+        return statusCache.handleStatusRequest(id, orgId, linker, {{.Name}}Resource.class);
     }
 
     @PostMapping
