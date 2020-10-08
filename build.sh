@@ -1,6 +1,3 @@
-#!/usr/bin/env sh
+#!/usr/bin/env bash
 
-
-rm -rf build
-
-gox -output="./build/{{.Dir}}-{{.OS}}" -rebuild -osarch="darwin/amd64 windows/amd64"
+docker build -t fint-consumer --build-arg VERSION=0.$(date +%y%m%d.%H%M) .

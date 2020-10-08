@@ -1,6 +1,6 @@
 package types
 
 type Identifier struct {
-	Name string
+	Name     string
 	Optional bool
 }

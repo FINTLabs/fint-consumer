@@ -50,7 +50,7 @@ var funcMap = template.FuncMap{
 	},
 }
 
-func Generate(owner string, repo string, tag string, filename string, force bool) {
+func Generate(owner string, repo string, tag string, filename string, force bool, component string, pkg string) []*types.Class {
 
 	//document.Get(tag, force)
 	fmt.Println("Generating Java code:")
@@ -64,28 +64,31 @@ func Generate(owner string, repo string, tag string, filename string, force bool
 		fmt.Println(err)
 	}
 
+	var resources []*types.Class
 	classes, _, _, _ := parser.GetClasses(owner, repo, tag, filename, force)
 	for _, c := range classes {
 
-		if !c.Abstract && c.Identifiable {
+		if strings.Contains(c.Package, component+"."+pkg) && !c.Abstract && c.Identifiable {
 			fmt.Printf("  > Creating consumer package and classes for: %s\n", fmt.Sprintf("%s.%s", c.Package, c.Name))
 
 			setupPackagePath(c)
 
-			writeClassFile(getLinkerClass(c), getMainPackage(c.Package), c.Name, getLinkerClassFileName(c.Name))
-			writeClassFile(getCacheServiceClass(c), getMainPackage(c.Package), c.Name, getCacheServiceClassFileName(c.Name))
-			writeClassFile(getControllerClass(c), getMainPackage(c.Package), c.Name, getControllerClassFileName(c.Name))
+			writeClassFile(getLinkerClass(c), GetMainPackage(c.Package), c.Name, getLinkerClassFileName(c.Name))
+			writeClassFile(getCacheServiceClass(c), GetMainPackage(c.Package), c.Name, getCacheServiceClassFileName(c.Name))
+			writeClassFile(getControllerClass(c), GetMainPackage(c.Package), c.Name, getControllerClassFileName(c.Name))
 
+			resources = append(resources, c)
 		}
 
 	}
 
 	fmt.Println("Finished generating Java code!")
 
+	return resources
 }
 
-func setupPackagePath(c types.Class) {
-	path := fmt.Sprintf("%s/%s/%s/%s", utils.GetTempDirectory(), config.BASE_PATH, getMainPackage(c.Package), strings.ToLower(c.Name))
+func setupPackagePath(c *types.Class) {
+	path := fmt.Sprintf("%s/%s/%s/%s", utils.GetTempDirectory(), config.BASE_PATH, GetMainPackage(c.Package), strings.ToLower(c.Name))
 	fmt.Printf("    > Creating directory: %s\n", path)
 	err := os.MkdirAll(path, 0777)
 	if err != nil {
@@ -93,7 +96,7 @@ func setupPackagePath(c types.Class) {
 		fmt.Println(err)
 	}
 }
-func getMainPackage(path string) string {
+func GetMainPackage(path string) string {
 	a := strings.Split(path, ".")
 	return strings.Join(a[3:], "/")
 }
@@ -124,19 +127,19 @@ func getControllerClassFileName(name string) string {
 	return fmt.Sprintf("%sController.java", name)
 }
 
-func getLinkerClass(c types.Class) string {
+func getLinkerClass(c *types.Class) string {
 	return getClass(c, LINKER_TEMPLATE)
 }
 
-func getCacheServiceClass(c types.Class) string {
+func getCacheServiceClass(c *types.Class) string {
 	return getClass(c, CACHE_SERVICE_TEMPLATE)
 }
 
-func getControllerClass(c types.Class) string {
+func getControllerClass(c *types.Class) string {
 	return getClass(c, CONTROLLER_TEMPLATE)
 }
 
-func getClass(c types.Class, t string) string {
+func getClass(c *types.Class, t string) string {
 	tpl := template.New("class").Funcs(funcMap)
 
 	parse, err := tpl.Parse(t)

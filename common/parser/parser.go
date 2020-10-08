@@ -12,22 +12,39 @@ import (
 	xmlquery "github.com/antchfx/xquery/xml"
 )
 
-func GetClasses(owner string, repo string, tag string, filename string, force bool) ([]types.Class, map[string]types.Import, map[string][]types.Class, map[string][]types.Class) {
-	doc := document.Get(owner, repo, tag, filename, force)
+func GetClasses(owner string, repo string, tag string, filename string, force bool) ([]*types.Class, map[string]types.Import, map[string][]*types.Class, map[string][]*types.Class) {
+	fmt.Printf("Fetching document %s/%s/%s @ %s ...", owner, repo, filename, tag)
+	doc, err := document.Get(owner, repo, tag, filename, force)
+	if err != nil {
+		return nil, nil, nil, nil
+	}
+	fmt.Println("ok")
 
-	var classes []types.Class
+	fmt.Print("Parsing ...")
+
+	var classes []*types.Class
+	// TODO BUG: packageMap and classMap fail for classes with the same name!
 	packageMap := make(map[string]types.Import)
-	classMap := make(map[string]types.Class)
-	javaPackageClassMap := make(map[string][]types.Class)
-	csPackageClassMap := make(map[string][]types.Class)
+	classMap := make(map[string]*types.Class)
+	javaPackageClassMap := make(map[string][]*types.Class)
+	csPackageClassMap := make(map[string][]*types.Class)
 
 	classElements := xmlquery.Find(doc, "//element[@type='Class']")
-	for _, c := range classElements {
 
-		var class types.Class
+	fmt.Print(".")
 
+	for i, c := range classElements {
+
+		if i%10 == 0 {
+			fmt.Print(".")
+		}
+
+		properties := c.SelectElement("properties")
+		class := new(types.Class)
+
+		class.Tag = tag
 		class.Name = replaceNO(c.SelectAttr("name"))
-		class.Abstract = toBool(c.SelectElement("properties").SelectAttr("isAbstract"))
+		class.Abstract = toBool(properties.SelectAttr("isAbstract"))
 		class.Extends = getExtends(doc, c)
 		class.Attributes = getAttributes(c)
 		class.Relations = getRelations(doc, c)
@@ -35,6 +52,15 @@ func GetClasses(owner string, repo string, tag string, filename string, force bo
 		class.Namespace = getNamespacePath(c, doc)
 		class.Identifiable = identifiable(class.Attributes)
 		class.Writable = writable(class.Attributes)
+		class.Stereotype = properties.SelectAttr("stereotype")
+		class.Documentation = properties.SelectAttr("documentation")
+		class.Deprecated = c.SelectElement("tags/tag[@name='DEPRECATED']") != nil
+
+		if len(class.Stereotype) == 0 {
+			if class.Abstract {
+				class.Stereotype = "abstrakt"
+			}
+		}
 
 		imp := types.Import{
 			Java:   fmt.Sprintf("%s.%s", class.Package, class.Name),
@@ -46,36 +72,74 @@ func GetClasses(owner string, repo string, tag string, filename string, force bo
 		classMap[class.Name] = class
 	}
 
+	fmt.Print(".")
+
 	packageMap["Date"] = types.Import{
 		Java: "java.util.Date",
 	}
 
-	for i := range classes {
-		classes[i].Using = getUsing(classes[i], packageMap)
-		classes[i].Identifiable = identifiableFromExtends(classes[i], classMap)
-		classes[i].Identifiers = getIdentifiers(classes[i], classMap)
-		classes[i].Imports = getImports(classes[i], packageMap)
-		javaPackageClassMap[classes[i].Package] = append(javaPackageClassMap[classes[i].Package], classes[i])
-		csPackageClassMap[classes[i].Namespace] = append(csPackageClassMap[classes[i].Namespace], classes[i])
-	}
-
-	for i := range classes {
-		if !classes[i].Writable {
-			classes[i].Writable = getWritableFromExtends(classes[i], classMap)
+	for _, class := range classes {
+		class.Imports = getImports(class, packageMap)
+		class.Using = getUsing(class, packageMap)
+		class.Identifiable = identifiableFromExtends(class, classMap)
+		class.Resource = isResource(class, classMap)
+		class.Identifiers = getIdentifiers(class, classMap)
+		javaPackageClassMap[class.Package] = append(javaPackageClassMap[class.Package], class)
+		csPackageClassMap[class.Namespace] = append(csPackageClassMap[class.Namespace], class)
+		if len(class.Stereotype) == 0 {
+			if class.Identifiable {
+				class.Stereotype = "hovedklasse"
+			} else {
+				class.Stereotype = "datatype"
+			}
+		}
+		if !class.Writable {
+			class.Writable = getWritableFromExtends(class, classMap)
 		}
 	}
 
+	fmt.Print(".")
+
+	for _, class := range classes {
+		for i, a := range class.Attributes {
+			if typ, found := classMap[a.Type]; found {
+				class.Attributes[i].Package = typ.Package
+				if typ.Resource {
+					class.Resources = append(class.Resources, a)
+				}
+			}
+		}
+	}
+
+	fmt.Print(".")
+
+	for _, class := range classes {
+		if len(class.Extends) > 0 {
+			if typ, found := classMap[class.Extends]; found {
+				class.ExtendsResource = typ.Resource || len(typ.Resources) > 0
+			}
+		}
+		class.InheritedAttributes = getAttributesFromExtends(class, classMap)
+	}
+
+	fmt.Print(".")
+
+	for _, class := range classes {
+		for i, r := range class.Relations {
+			class.Relations[i].Stereotype = classMap[r.Target].Stereotype
+		}
+	}
+
+	fmt.Println(". done")
 	return classes, packageMap, javaPackageClassMap, csPackageClassMap
 }
 
-func getWritableFromExtends(class types.Class, classMap map[string]types.Class) bool {
-
+func getWritableFromExtends(class *types.Class, classMap map[string]*types.Class) bool {
 	if len(class.Extends) > 0 {
 		extendedClass := classMap[class.Extends]
 		if extendedClass.Writable {
 			return true
 		}
-
 		for len(extendedClass.Extends) > 0 {
 			extendedClass = classMap[extendedClass.Extends]
 			if extendedClass.Writable {
@@ -83,22 +147,51 @@ func getWritableFromExtends(class types.Class, classMap map[string]types.Class) 
 			}
 		}
 	}
-
 	return false
 }
 
-func identifiableFromExtends(class types.Class, classMap map[string]types.Class) bool {
+func identifiableFromExtends(class *types.Class, classMap map[string]*types.Class) bool {
 	if class.Identifiable {
 		return true
 	}
+	if len(class.Extends) > 0 {
+		return identifiableFromExtends(classMap[class.Extends], classMap)
+	}
+	return false
+}
 
-	for len(class.Extends) > 0 {
-		class = classMap[class.Extends]
-		if class.Identifiable {
-			return true
+func getClassByIdRef(idref string, doc *xmlquery.Node) *xmlquery.Node {
+	result := xmlquery.Find(doc, fmt.Sprintf("//element[@idref='%s']", idref))
+	return result[0]
+}
+
+func getAttributesFromExtends(class *types.Class, classMap map[string]*types.Class) []types.InheritedAttribute {
+
+	var result []types.InheritedAttribute
+
+	extendedClass := class
+
+	for len(extendedClass.Extends) > 0 {
+		extendedClass = classMap[extendedClass.Extends]
+		for _, a := range extendedClass.Attributes {
+			var att = types.InheritedAttribute{
+				Owner:     extendedClass.Name,
+				Attribute: a,
+			}
+			result = append(result, att)
 		}
 	}
 
+	return result
+}
+
+func isResource(class *types.Class, classMap map[string]*types.Class) bool {
+	if len(class.Relations) > 0 {
+		return true
+	}
+	if len(class.Extends) > 0 {
+		return isResource(classMap[class.Extends], classMap)
+	}
 	return false
 }
 
@@ -109,7 +202,6 @@ func writable(attribs []types.Attribute) bool {
 			return true
 		}
 	}
-
 	return false
 }
 
@@ -124,7 +216,7 @@ func identifiable(attribs []types.Attribute) bool {
 	return false
 }
 
-func getIdentifiers(class types.Class, classMap map[string]types.Class) []types.Identifier {
+func getIdentifiers(class *types.Class, classMap map[string]*types.Class) []types.Identifier {
 	var identifiers []types.Identifier
 
 	for _, a := range class.Attributes {
@@ -143,12 +235,12 @@ func getIdentifiers(class types.Class, classMap map[string]types.Class) []types.
 	return identifiers
 }
 
-func getImports(c types.Class, imports map[string]types.Import) []string {
+func getImports(c *types.Class, imports map[string]types.Import) []string {
 
 	attribs := c.Attributes
 	var imps []string
-	for _, value := range attribs {
-		javaType := types.GetJavaType(value.Type)
+	for _, att := range attribs {
+		javaType := types.GetJavaType(att.Type)
 		if imports[javaType].Java != c.Package && len(javaType) > 0 {
 			imps = append(imps, imports[javaType].Java)
 		}
@@ -165,12 +257,12 @@ func getImports(c types.Class, imports map[string]types.Import) []string {
 	return utils.Distinct(utils.TrimArray(imps))
 }
 
-func getUsing(c types.Class, imports map[string]types.Import) []string {
+func getUsing(c *types.Class, imports map[string]types.Import) []string {
 
 	attribs := c.Attributes
 	var imps []string
-	for _, value := range attribs {
-		csType := types.GetCSType(value.Type)
+	for _, att := range attribs {
+		csType := types.GetCSType(att.Type)
 		if imports[csType].CSharp != c.Package && len(imports[csType].CSharp) > 0 {
 			imps = append(imps, imports[csType].CSharp)
 		}
@@ -196,7 +288,6 @@ func getPackagePath(c *xmlquery.Node, doc *xmlquery.Node) string {
 		pkgs = append(pkgs, getNameLower(parentPkg, doc))
 		parentPkg = getParentPackage(parentPkg, doc)
 	}
-
 	pkgs = utils.TrimArray(pkgs)
 	pkgs = utils.Reverse(pkgs)
 	return replaceNO(fmt.Sprintf("%s.%s", config.JAVA_PACKAGE_BASE, strings.Join(pkgs, ".")))
@@ -215,7 +306,6 @@ func getNamespacePath(c *xmlquery.Node, doc *xmlquery.Node) string {
 		pkgs = append(pkgs, getName(parentPkg, doc))
 		parentPkg = getParentPackage(parentPkg, doc)
 	}
-
 	pkgs = utils.TrimArray(pkgs)
 	pkgs = utils.Reverse(pkgs)
 	return replaceNO(fmt.Sprintf("%s.%s", config.NET_NAMESPACE_BASE, strings.Join(pkgs, ".")))
@@ -296,6 +386,7 @@ func getAttributes(c *xmlquery.Node) []types.Attribute {
 
 		attrib := types.Attribute{}
 		attrib.Name = replaceNO(a.SelectAttr("name"))
+		attrib.Deprecated = a.SelectElement("tags/tag[@name='DEPRECATED']") != nil
 		attrib.List = strings.Compare(a.SelectElement("bounds").SelectAttr("upper"), "*") == 0
 		attrib.Optional = !attrib.List && strings.Compare(a.SelectElement("bounds").SelectAttr("lower"), "0") == 0
 		attrib.Type = replaceNO(a.SelectElement("properties").SelectAttr("type"))
@@ -307,8 +398,8 @@ func getAttributes(c *xmlquery.Node) []types.Attribute {
 	return attributes
 }
 
-func getRelations(doc *xmlquery.Node, c *xmlquery.Node) []string {
-	var assocs []string
+func getRelations(doc *xmlquery.Node, c *xmlquery.Node) []types.Association {
+	var assocs []types.Association
 	isAbstract := toBool(c.SelectElement("properties").SelectAttr("isAbstract"))
 	if !isAbstract {
 		assocs = getAssociations(doc, c)
@@ -318,9 +409,10 @@ func getRelations(doc *xmlquery.Node, c *xmlquery.Node) []string {
 	return assocs
 }
 
-// TODO: This is actualy iterativ and not recursive. This should probably be fixed in the future.
-func getRecursivelyAssociationsFromExtends(doc *xmlquery.Node, c *xmlquery.Node) []string {
-	var assocs []string
+// TODO: This is actually iterative and not recursive, and works only for linear inheritance.
+// TODO: Possible to combine with getAssociationsFromExtends?
+func getRecursivelyAssociationsFromExtends(doc *xmlquery.Node, c *xmlquery.Node) []types.Association {
+	var assocs []types.Association
 	extAssocs, extends := getAssociationsFromExtends(doc, c)
 	assocs = append(assocs, extAssocs...)
 	for {
@@ -333,8 +425,8 @@ func getRecursivelyAssociationsFromExtends(doc *xmlquery.Node, c *xmlquery.Node)
 	return assocs
 }
 
-func getAssociationsFromExtends(doc *xmlquery.Node, c *xmlquery.Node) ([]string, *xmlquery.Node) {
-	var assocs []string
+func getAssociationsFromExtends(doc *xmlquery.Node, c *xmlquery.Node) ([]types.Association, *xmlquery.Node) {
+	var assocs []types.Association
 	extends := xmlquery.Find(doc, fmt.Sprintf("//connectors/connector/properties[@ea_type='Generalization']/../source[@idref='%s']/../target", c.SelectAttr("idref")))
 	if len(extends) == 1 {
 		assocs = append(assocs, getAssociations(doc, extends[0])...)
@@ -344,16 +436,33 @@ func getAssociationsFromExtends(doc *xmlquery.Node, c *xmlquery.Node) ([]string,
 	return assocs, nil
 }
 
-func getAssociations(doc *xmlquery.Node, c *xmlquery.Node) []string {
-	var assocs []string
+func getMultiplicity(multiplicity string) (bool, bool) {
+	return strings.HasPrefix(multiplicity, "0"),
+		strings.HasSuffix(multiplicity, "*")
+}
+
+func getAssociations(doc *xmlquery.Node, c *xmlquery.Node) []types.Association {
+	var assocs []types.Association
 	for _, rr := range xmlquery.Find(doc, fmt.Sprintf("//connectors/connector/properties[@ea_type='Association']/../source[@idref='%s']/../target/role", c.SelectAttr("idref"))) {
 		if len(rr.SelectAttr("name")) > 0 {
-			assocs = append(assocs, strings.ToUpper(replaceNO(rr.SelectAttr("name"))))
+			assoc := types.Association{}
+			assoc.Name = replaceNO(rr.SelectAttr("name"))
+			assoc.Target = replaceNO(rr.SelectElement("../model").SelectAttr("name"))
+			assoc.Optional, assoc.List = getMultiplicity(rr.SelectElement("../type").SelectAttr("multiplicity"))
+			assoc.Deprecated = rr.SelectElement("../../tags/tag[@name='DEPRECATED']") != nil
+			assoc.TargetPackage = getPackagePath(getClassByIdRef(rr.SelectElement("../../target").SelectAttr("idref"), doc), doc)
+			assocs = append(assocs, assoc)
 		}
 	}
 	for _, rl := range xmlquery.Find(doc, fmt.Sprintf("//connectors/connector/properties[@ea_type='Association']/../target[@idref='%s']/../source/role", c.SelectAttr("idref"))) {
 		if len(rl.SelectAttr("name")) > 0 {
-			assocs = append(assocs, strings.ToUpper(replaceNO(rl.SelectAttr("name"))))
+			assoc := types.Association{}
+			assoc.Name = replaceNO(rl.SelectAttr("name"))
+			assoc.Target = replaceNO(rl.SelectElement("../model").SelectAttr("name"))
+			assoc.Optional, assoc.List = getMultiplicity(rl.SelectElement("../type").SelectAttr("multiplicity"))
+			assoc.Deprecated = rl.SelectElement("../../tags/tag[@name='DEPRECATED']") != nil
+			assoc.TargetPackage = getPackagePath(getClassByIdRef(rl.SelectElement("../../source").SelectAttr("idref"), doc), doc)
+			assocs = append(assocs, assoc)
 		}
 	}
 	return assocs

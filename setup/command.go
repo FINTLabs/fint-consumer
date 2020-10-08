@@ -44,14 +44,14 @@ func CmdSetupConsumer(c *cli.Context) {
 	version := c.String("version")
 
 	setupSkeleton(name, ref)
-	generate.Generate(c.GlobalString("owner"), c.GlobalString("repo"), tag, c.GlobalString("filename"), force)
+	resources := generate.Generate(c.GlobalString("owner"), c.GlobalString("repo"), tag, c.GlobalString("filename"), force, component, pkg)
 
 	addModels(component, pkg, name)
 
 	includePerson := c.Bool("includePerson")
 	addPerson(includePerson, name)
 
-	updateConfigFiles(component, pkg, name)
+	updateConfigFiles(component, pkg, name, resources)
 
 	reportNeedOfChanges(name)
 
@@ -109,11 +109,33 @@ func getModels(name string) []types.Model {
 	}
 	return models
 }
-func updateConfigFiles(component string, pkg string, name string) {
-	models := getModels(name)
+func getModelsFromResources(resources []*types.Class) []types.Model {
+	var models = []types.Model{}
+	for _, c := range resources {
+		models = append(models, types.Model{Name: c.Name, Package: c.Package})
+	}
+	return models
+}
+func getAssociationsFromResources(resources []*types.Class) []types.Association {
+	var assocs = []types.Association{}
+	var exists = make(map[string]struct{})
+	for _, c := range resources {
+		for _, rel := range c.Relations {
+			_, ok := exists[rel.Target]
+			if !ok {
+				assocs = append(assocs, rel)
+				exists[rel.Target] = struct{}{}
+			}
+		}
+	}
+	return assocs
+}
+func updateConfigFiles(component string, pkg string, name string, resources []*types.Class) {
+	models := getModelsFromResources(resources)
+	assocs := getAssociationsFromResources(resources)
 	/*writeConsumerPropsFile(getConsumerPropsClass(models), name)*/
 	writeConstantsFile(getConstantsClass(name, models), name)
-	writeLinkMapperFile(getLinkMapperClass(component, pkg, models), name)
+	writeLinkMapperFile(getLinkMapperClass(component, pkg, models, assocs), name)
 	writeRestEndpointsFile(getRestEndpointsClass(models), name)
 }
 func addModels(component string, pkg string, name string) {

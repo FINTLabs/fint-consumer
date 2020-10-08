@@ -14,14 +14,17 @@ import no.fint.model.{{.Component}}.*;
 
 public class LinkMapper {
 
-	public static Map<String, String> linkMapper(String contextPath) {
-		return ImmutableMap.<String,String>builder()
-		{{- range $i, $model := .Models }}
-			.put({{ ToTitle .Name }}.class.getName(), contextPath + RestEndpoints.{{ ToUpper .Name }})
-		{{- end }}
-			/* .put(TODO,TODO) */
-			.build();
-	}
+    public static Map<String, String> linkMapper(String contextPath) {
+        return ImmutableMap.<String,String>builder()
+        {{- range $i, $model := .Models }}
+            .put({{ ToTitle .Name }}.class.getName(), contextPath + RestEndpoints.{{ ToUpper .Name }})
+        {{- end }}
+        {{- range $i, $assoc := .Assocs }}
+            .put("{{ .TargetPackage }}.{{ .Target }}", "/{{ ToUri .TargetPackage }}/{{ ToLower .Target }}")
+        {{- end }}
+            /* .put(TODO,TODO) */
+            .build();
+    }
 
 }
 `
