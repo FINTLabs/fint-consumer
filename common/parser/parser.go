@@ -101,25 +101,33 @@ func GetClasses(owner string, repo string, tag string, filename string, force bo
 	fmt.Print(".")
 
 	for _, class := range classes {
-		for i, a := range class.Attributes {
-			if typ, found := classMap[a.Type]; found {
-				class.Attributes[i].Package = typ.Package
-				if typ.Resource {
-					class.Resources = append(class.Resources, a)
-				}
-			}
-		}
-	}
-
-	fmt.Print(".")
-
-	for _, class := range classes {
 		if len(class.Extends) > 0 {
 			if typ, found := classMap[class.Extends]; found {
 				class.ExtendsResource = typ.Resource || len(typ.Resources) > 0
 			}
 		}
 		class.InheritedAttributes = getAttributesFromExtends(class, classMap)
+	}
+
+	fmt.Print(".")
+
+	for _, class := range classes {
+		for i, a := range class.Attributes {
+			if typ, found := classMap[a.Type]; found {
+				class.Attributes[i].Package = typ.Package
+				if typ.Resource {
+					class.Resources = append(class.Resources, class.Attributes[i])
+				}
+			}
+		}
+		for i, a := range class.InheritedAttributes {
+			if typ, found := classMap[a.Type]; found {
+				class.InheritedAttributes[i].Package = typ.Package
+				if typ.Resource {
+					class.Resources = append(class.Resources, class.InheritedAttributes[i].Attribute)
+				}
+			}
+		}
 	}
 
 	fmt.Print(".")
