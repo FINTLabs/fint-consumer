@@ -86,32 +86,12 @@ func verfifyParameter(name string, message string) {
 		os.Exit(-1)
 	}
 }
-func getModels(name string) []types.Model {
-	var models = []types.Model{}
-
-	walkModels := func(path string, info os.FileInfo, err error) error {
-		if err != nil {
-			return err
-		}
-		if !info.IsDir() && strings.HasSuffix(path, "CacheService.java") {
-			name := strings.ToLower(strings.TrimSuffix(filepath.Base(path), "CacheService.java"))
-			l := strings.Split(filepath.Dir(path), "/")
-			pkg := strings.Join(l[4:], ".")
-			models = append(models, types.Model{Name: name, Package: pkg})
-			return filepath.SkipDir
-		}
-		return nil
-	}
-	err := filepath.Walk(fmt.Sprintf("%s/src/main/java/no/fint/consumer/models", getConsumerName(name)), walkModels)
-	if err != nil {
-		fmt.Println(err)
-	}
-	return models
-}
 func getModelsFromResources(resources []*types.Class) []types.Model {
 	var models = []types.Model{}
 	for _, c := range resources {
-		models = append(models, types.Model{Name: c.Name, Package: c.Package})
+		if !c.Abstract && c.Identifiable {
+			models = append(models, types.Model{Name: c.Name, Package: c.Package})
+		}
 	}
 	return models
 }
@@ -120,10 +100,13 @@ func getAssociationsFromResources(resources []*types.Class) []types.Association 
 	var exists = make(map[string]struct{})
 	for _, c := range resources {
 		for _, rel := range c.Relations {
-			_, ok := exists[rel.Target]
-			if !ok {
-				assocs = append(assocs, rel)
-				exists[rel.Target] = struct{}{}
+			//fmt.Printf("Considering %s.%s -> %s.%s...\n", c.Name, rel.Name, rel.TargetPackage, rel.Target)
+			if c.Package != rel.TargetPackage && rel.Stereotype == "hovedklasse" && rel.Target != "Person" {
+				_, ok := exists[rel.Target]
+				if !ok {
+					assocs = append(assocs, rel)
+					exists[rel.Target] = struct{}{}
+				}
 			}
 		}
 	}
