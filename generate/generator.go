@@ -18,10 +18,15 @@ var funcMap = template.FuncMap{
 	"ToLower": strings.ToLower,
 	"ToUpper": strings.ToUpper,
 	"ToTitle": strings.Title,
-	"GetIdentifikatorPackage": func(imp []string) string {
-		for _, p := range imp {
-			if strings.HasSuffix(p, ".Identifikator") {
-				return p
+	"GetIdentifikatorPackage": func(attr []types.Attribute, inh []types.InheritedAttribute) string {
+		for _, a := range attr {
+			if a.Type == "Identifikator" {
+				return a.Package + "." + a.Type
+			}
+		}
+		for _, a := range inh {
+			if a.Type == "Identifikator" {
+				return a.Package + "." + a.Type
 			}
 		}
 		return "java.util.Random"
