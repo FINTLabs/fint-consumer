@@ -55,7 +55,7 @@ var funcMap = template.FuncMap{
 	},
 }
 
-func Generate(owner string, repo string, tag string, filename string, force bool, component string, pkg string) []*types.Class {
+func Generate(owner string, repo string, tag string, filename string, force bool, component string, pkg string, includePerson bool) []*types.Class {
 
 	//document.Get(tag, force)
 	fmt.Println("Generating Java code:")
@@ -70,11 +70,19 @@ func Generate(owner string, repo string, tag string, filename string, force bool
 	}
 
 	var resources []*types.Class
+	var attributes = make(map[string]bool)
+	var classMap = make(map[string]*types.Class)
+
 	classes, _, _, _ := parser.GetClasses(owner, repo, tag, filename, force)
 	for _, c := range classes {
+		classMap[c.Package+"."+c.Name] = c
+	}
 
-		if strings.Contains(c.Package, component+"."+pkg) && !c.Abstract && c.Identifiable {
-			fmt.Printf("  > Creating consumer package and classes for: %s\n", fmt.Sprintf("%s.%s", c.Package, c.Name))
+	for _, c := range classes {
+
+		if (strings.Contains(c.Package, component+"."+pkg) && !c.Abstract && c.Identifiable) ||
+			(includePerson && (c.Name == "Person" || c.Name == "Kontaktperson")) {
+			fmt.Printf("  > Creating consumer package and classes for: %s.%s\n", c.Package, c.Name)
 
 			setupPackagePath(c)
 
@@ -83,13 +91,36 @@ func Generate(owner string, repo string, tag string, filename string, force bool
 			writeClassFile(getControllerClass(c), GetMainPackage(c.Package), c.Name, getControllerClassFileName(c.Name))
 
 			resources = append(resources, c)
+			resources = append(resources, getLinks(c, classMap, attributes)...)
 		}
-
 	}
 
 	fmt.Println("Finished generating Java code!")
 
+	for _, c := range classes {
+		_, ok := attributes[c.Name]
+		if ok {
+			resources = append(resources, c)
+		}
+	}
+
 	return resources
+}
+
+func getLinks(c *types.Class, classMap map[string]*types.Class, seen map[string]bool) []*types.Class {
+	var result []*types.Class
+	for _, r := range c.Resources {
+		name := r.Package + "." + r.Type
+		if _, ok := seen[name]; !ok {
+			if target, found := classMap[name]; found {
+				//fmt.Printf("Need to link to %s\n", name)
+				seen[name] = true
+				result = append(result, target)
+				result = append(result, getLinks(target, classMap, seen)...)
+			}
+		}
+	}
+	return result
 }
 
 func setupPackagePath(c *types.Class) {

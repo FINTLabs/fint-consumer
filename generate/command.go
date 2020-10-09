@@ -15,6 +15,6 @@ func CmdGenerate(c *cli.Context) {
 	}
 	force := c.GlobalBool("force")
 
-	Generate(c.GlobalString("owner"), c.GlobalString("repo"), tag, c.GlobalString("filename"), force, c.String("component"), c.String("package"))
+	Generate(c.GlobalString("owner"), c.GlobalString("repo"), tag, c.GlobalString("filename"), force, c.String("component"), c.String("package"), false)
 
 }

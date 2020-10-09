@@ -44,13 +44,11 @@ func CmdSetupConsumer(c *cli.Context) {
 	version := c.String("version")
 
 	setupSkeleton(name, ref)
-	resources := generate.Generate(c.GlobalString("owner"), c.GlobalString("repo"), tag, c.GlobalString("filename"), force, component, pkg)
+	includePerson := c.Bool("includePerson")
+	resources := generate.Generate(c.GlobalString("owner"), c.GlobalString("repo"), tag, c.GlobalString("filename"), force, component, pkg, includePerson)
 	sort.Sort(types.ByName(resources))
 
 	addModels(component, pkg, name)
-
-	includePerson := c.Bool("includePerson")
-	addPerson(includePerson, name)
 
 	updateConfigFiles(component, pkg, name, resources)
 
@@ -149,24 +147,6 @@ func addModels(component string, pkg string, name string) {
 		fmt.Println(err)
 	}
 }
-func addPerson(includePerson bool, name string) {
-	if includePerson {
-		src := fmt.Sprintf("%s/%s/felles/person", utils.GetTempDirectory(), config.BASE_PATH)
-		dest := fmt.Sprintf("./%s/src/main/java/no/fint/consumer/models/person/", getConsumerName(name))
-		err := utils.CopyDir(src, dest)
-		if err != nil {
-			fmt.Println(err)
-		}
-
-		src = fmt.Sprintf("%s/%s/felles/kontaktperson", utils.GetTempDirectory(), config.BASE_PATH)
-		dest = fmt.Sprintf("./%s/src/main/java/no/fint/consumer/models/kontaktperson/", getConsumerName(name))
-		err = utils.CopyDir(src, dest)
-		if err != nil {
-			fmt.Println(err)
-		}
-	}
-}
-
 func addModelToGradle(model string, name string) {
 	m := fmt.Sprintf("    compile(\"no.fint:fint-%s-resource-model-java:${apiVersion}\")", model)
 	gradleFile := utils.GetGradleFile(getConsumerName(name))
