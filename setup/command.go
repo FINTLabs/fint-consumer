@@ -5,7 +5,7 @@ import (
 	"io/ioutil"
 	"log"
 	"os"
-	"path/filepath"
+	"sort"
 	"strings"
 
 	"github.com/FINTLabs/fint-consumer/common/config"
@@ -45,6 +45,7 @@ func CmdSetupConsumer(c *cli.Context) {
 
 	setupSkeleton(name, ref)
 	resources := generate.Generate(c.GlobalString("owner"), c.GlobalString("repo"), tag, c.GlobalString("filename"), force, component, pkg)
+	sort.Sort(types.ByName(resources))
 
 	addModels(component, pkg, name)
 
