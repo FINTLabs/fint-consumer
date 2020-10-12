@@ -6,10 +6,8 @@ import no.fint.consumer.utils.RestEndpoints;
 import java.util.Map;
 import com.google.common.collect.ImmutableMap;
 
-{{ if .Package -}}
-import no.fint.model.{{.Component}}.{{.Package}}.*;
-{{- else -}}
-import no.fint.model.{{.Component}}.*;
+{{- range $i, $model := .Models }}
+import {{.Package}}.{{.Name}};
 {{- end }}
 
 public class LinkMapper {

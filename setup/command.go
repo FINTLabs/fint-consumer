@@ -120,7 +120,7 @@ func updateConfigFiles(component string, pkg string, name string, resources []*t
 	assocs := getAssociationsFromResources(resources)
 	/*writeConsumerPropsFile(getConsumerPropsClass(models), name)*/
 	writeConstantsFile(getConstantsClass(name, models), name)
-	writeLinkMapperFile(getLinkMapperClass(component, pkg, models, assocs), name)
+	writeLinkMapperFile(getLinkMapperClass(models, assocs), name)
 	writeRestEndpointsFile(getRestEndpointsClass(models), name)
 }
 func addModels(component string, pkg string, name string) {

@@ -11,7 +11,7 @@ import (
 	"github.com/FINTLabs/fint-consumer/generate"
 )
 
-func getLinkMapperClass(component string, pkg string, models []types.Model, assocs []types.Association) string {
+func getLinkMapperClass(models []types.Model, assocs []types.Association) string {
 	var funcMap = template.FuncMap{
 		"ToLower": strings.ToLower,
 		"ToUpper": strings.ToUpper,
@@ -27,13 +27,9 @@ func getLinkMapperClass(component string, pkg string, models []types.Model, asso
 	}
 
 	m := struct {
-		Component string
-		Package   string
-		Models    []types.Model
-		Assocs    []types.Association
+		Models []types.Model
+		Assocs []types.Association
 	}{
-		component,
-		pkg,
 		models,
 		assocs,
 	}
