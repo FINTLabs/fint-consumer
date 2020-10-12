@@ -69,8 +69,6 @@ func Generate(owner string, repo string, tag string, filename string, force bool
 		fmt.Println(err)
 	}
 
-	var resources []*types.Class
-	var attributes = make(map[string]bool)
 	var classMap = make(map[string]*types.Class)
 
 	classes, _, _, _ := parser.GetClasses(owner, repo, tag, filename, force)
@@ -78,9 +76,16 @@ func Generate(owner string, repo string, tag string, filename string, force bool
 		classMap[c.Package+"."+c.Name] = c
 	}
 
+	var pkgName = "." + component
+	if len(pkg) > 0 {
+		pkgName = pkgName + "." + pkg
+	}
+	var resources []*types.Class
+	var attributes = make(map[string]bool)
+
 	for _, c := range classes {
 
-		if (strings.Contains(c.Package, component+"."+pkg) && !c.Abstract && c.Identifiable) ||
+		if (strings.Contains(c.Package, pkgName) && !c.Abstract && c.Identifiable) ||
 			(includePerson && (c.Name == "Person" || c.Name == "Kontaktperson")) {
 			fmt.Printf("  > Creating consumer package and classes for: %s.%s\n", c.Package, c.Name)
 

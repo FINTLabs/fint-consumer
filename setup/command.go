@@ -99,9 +99,12 @@ func getAssociationsFromResources(resources []*types.Class) []types.Association 
 	var assocs = []types.Association{}
 	var exists = make(map[string]struct{})
 	for _, c := range resources {
+		exists[c.Name] = struct{}{}
+	}
+	for _, c := range resources {
 		for _, rel := range c.Relations {
 			//fmt.Printf("Considering %s.%s -> %s.%s...\n", c.Name, rel.Name, rel.TargetPackage, rel.Target)
-			if c.Package != rel.TargetPackage && rel.Stereotype == "hovedklasse" && rel.Target != "Person" {
+			if rel.Stereotype == "hovedklasse" {
 				_, ok := exists[rel.Target]
 				if !ok {
 					assocs = append(assocs, rel)
