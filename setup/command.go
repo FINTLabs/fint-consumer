@@ -5,7 +5,7 @@ import (
 	"io/ioutil"
 	"log"
 	"os"
-	"path/filepath"
+	"sort"
 	"strings"
 
 	"github.com/FINTLabs/fint-consumer/common/config"
@@ -44,14 +44,13 @@ func CmdSetupConsumer(c *cli.Context) {
 	version := c.String("version")
 
 	setupSkeleton(name, ref)
-	generate.Generate(c.GlobalString("owner"), c.GlobalString("repo"), tag, c.GlobalString("filename"), force)
+	includePerson := c.Bool("includePerson")
+	resources := generate.Generate(c.GlobalString("owner"), c.GlobalString("repo"), tag, c.GlobalString("filename"), force, component, pkg, includePerson)
+	sort.Sort(types.ByName(resources))
 
 	addModels(component, pkg, name)
 
-	includePerson := c.Bool("includePerson")
-	addPerson(includePerson, name)
-
-	updateConfigFiles(component, pkg, name)
+	updateConfigFiles(component, pkg, name, resources)
 
 	reportNeedOfChanges(name)
 
@@ -87,33 +86,41 @@ func verfifyParameter(name string, message string) {
 		os.Exit(-1)
 	}
 }
-func getModels(name string) []types.Model {
+func getModelsFromResources(resources []*types.Class) []types.Model {
 	var models = []types.Model{}
-
-	walkModels := func(path string, info os.FileInfo, err error) error {
-		if err != nil {
-			return err
+	for _, c := range resources {
+		if !c.Abstract && c.Identifiable {
+			models = append(models, types.Model{Name: c.Name, Package: c.Package})
 		}
-		if !info.IsDir() && strings.HasSuffix(path, "CacheService.java") {
-			name := strings.ToLower(strings.TrimSuffix(filepath.Base(path), "CacheService.java"))
-			l := strings.Split(filepath.Dir(path), "/")
-			pkg := strings.Join(l[4:], ".")
-			models = append(models, types.Model{Name: name, Package: pkg})
-			return filepath.SkipDir
-		}
-		return nil
-	}
-	err := filepath.Walk(fmt.Sprintf("%s/src/main/java/no/fint/consumer/models", getConsumerName(name)), walkModels)
-	if err != nil {
-		fmt.Println(err)
 	}
 	return models
 }
-func updateConfigFiles(component string, pkg string, name string) {
-	models := getModels(name)
+func getAssociationsFromResources(resources []*types.Class) []types.Association {
+	var assocs = []types.Association{}
+	var exists = make(map[string]struct{})
+	for _, c := range resources {
+		exists[c.Name] = struct{}{}
+	}
+	for _, c := range resources {
+		for _, rel := range c.Relations {
+			//fmt.Printf("Considering %s.%s -> %s.%s...\n", c.Name, rel.Name, rel.TargetPackage, rel.Target)
+			if rel.Stereotype == "hovedklasse" {
+				_, ok := exists[rel.Target]
+				if !ok {
+					assocs = append(assocs, rel)
+					exists[rel.Target] = struct{}{}
+				}
+			}
+		}
+	}
+	return assocs
+}
+func updateConfigFiles(component string, pkg string, name string, resources []*types.Class) {
+	models := getModelsFromResources(resources)
+	assocs := getAssociationsFromResources(resources)
 	/*writeConsumerPropsFile(getConsumerPropsClass(models), name)*/
 	writeConstantsFile(getConstantsClass(name, models), name)
-	writeLinkMapperFile(getLinkMapperClass(component, pkg, models), name)
+	writeLinkMapperFile(getLinkMapperClass(models, assocs), name)
 	writeRestEndpointsFile(getRestEndpointsClass(models), name)
 }
 func addModels(component string, pkg string, name string) {
@@ -126,24 +133,6 @@ func addModels(component string, pkg string, name string) {
 		fmt.Println(err)
 	}
 }
-func addPerson(includePerson bool, name string) {
-	if includePerson {
-		src := fmt.Sprintf("%s/%s/felles/person", utils.GetTempDirectory(), config.BASE_PATH)
-		dest := fmt.Sprintf("./%s/src/main/java/no/fint/consumer/models/person/", getConsumerName(name))
-		err := utils.CopyDir(src, dest)
-		if err != nil {
-			fmt.Println(err)
-		}
-
-		src = fmt.Sprintf("%s/%s/felles/kontaktperson", utils.GetTempDirectory(), config.BASE_PATH)
-		dest = fmt.Sprintf("./%s/src/main/java/no/fint/consumer/models/kontaktperson/", getConsumerName(name))
-		err = utils.CopyDir(src, dest)
-		if err != nil {
-			fmt.Println(err)
-		}
-	}
-}
-
 func addModelToGradle(model string, name string) {
 	m := fmt.Sprintf("    compile(\"no.fint:fint-%s-resource-model-java:${apiVersion}\")", model)
 	gradleFile := utils.GetGradleFile(getConsumerName(name))

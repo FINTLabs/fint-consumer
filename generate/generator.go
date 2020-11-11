@@ -18,10 +18,15 @@ var funcMap = template.FuncMap{
 	"ToLower": strings.ToLower,
 	"ToUpper": strings.ToUpper,
 	"ToTitle": strings.Title,
-	"GetIdentifikatorPackage": func(imp []string) string {
-		for _, p := range imp {
-			if strings.HasSuffix(p, ".Identifikator") {
-				return p
+	"GetIdentifikatorPackage": func(attr []types.Attribute, inh []types.InheritedAttribute) string {
+		for _, a := range attr {
+			if a.Type == "Identifikator" {
+				return a.Package + "." + a.Type
+			}
+		}
+		for _, a := range inh {
+			if a.Type == "Identifikator" {
+				return a.Package + "." + a.Type
 			}
 		}
 		return "java.util.Random"
@@ -50,7 +55,7 @@ var funcMap = template.FuncMap{
 	},
 }
 
-func Generate(owner string, repo string, tag string, filename string, force bool) {
+func Generate(owner string, repo string, tag string, filename string, force bool, component string, pkg string, includePerson bool) []*types.Class {
 
 	//document.Get(tag, force)
 	fmt.Println("Generating Java code:")
@@ -64,28 +69,67 @@ func Generate(owner string, repo string, tag string, filename string, force bool
 		fmt.Println(err)
 	}
 
+	var classMap = make(map[string]*types.Class)
+
 	classes, _, _, _ := parser.GetClasses(owner, repo, tag, filename, force)
 	for _, c := range classes {
+		classMap[c.Package+"."+c.Name] = c
+	}
 
-		if !c.Abstract && c.Identifiable {
-			fmt.Printf("  > Creating consumer package and classes for: %s\n", fmt.Sprintf("%s.%s", c.Package, c.Name))
+	var pkgName = "." + component
+	if len(pkg) > 0 {
+		pkgName = pkgName + "." + pkg
+	}
+	var resources []*types.Class
+	var attributes = make(map[string]bool)
+
+	for _, c := range classes {
+
+		if (strings.Contains(c.Package, pkgName) && !c.Abstract && c.Identifiable) ||
+			(includePerson && (c.Name == "Person" || c.Name == "Kontaktperson")) {
+			fmt.Printf("  > Creating consumer package and classes for: %s.%s\n", c.Package, c.Name)
 
 			setupPackagePath(c)
 
-			writeClassFile(getLinkerClass(c), getMainPackage(c.Package), c.Name, getLinkerClassFileName(c.Name))
-			writeClassFile(getCacheServiceClass(c), getMainPackage(c.Package), c.Name, getCacheServiceClassFileName(c.Name))
-			writeClassFile(getControllerClass(c), getMainPackage(c.Package), c.Name, getControllerClassFileName(c.Name))
+			writeClassFile(getLinkerClass(c), GetMainPackage(c.Package), c.Name, getLinkerClassFileName(c.Name))
+			writeClassFile(getCacheServiceClass(c), GetMainPackage(c.Package), c.Name, getCacheServiceClassFileName(c.Name))
+			writeClassFile(getControllerClass(c), GetMainPackage(c.Package), c.Name, getControllerClassFileName(c.Name))
 
+			resources = append(resources, c)
+			resources = append(resources, getLinks(c, classMap, attributes)...)
 		}
-
 	}
 
 	fmt.Println("Finished generating Java code!")
 
+	for _, c := range classes {
+		_, ok := attributes[c.Name]
+		if ok {
+			resources = append(resources, c)
+		}
+	}
+
+	return resources
 }
 
-func setupPackagePath(c types.Class) {
-	path := fmt.Sprintf("%s/%s/%s/%s", utils.GetTempDirectory(), config.BASE_PATH, getMainPackage(c.Package), strings.ToLower(c.Name))
+func getLinks(c *types.Class, classMap map[string]*types.Class, seen map[string]bool) []*types.Class {
+	var result []*types.Class
+	for _, r := range c.Resources {
+		name := r.Package + "." + r.Type
+		if _, ok := seen[name]; !ok {
+			if target, found := classMap[name]; found {
+				//fmt.Printf("Need to link to %s\n", name)
+				seen[name] = true
+				result = append(result, target)
+				result = append(result, getLinks(target, classMap, seen)...)
+			}
+		}
+	}
+	return result
+}
+
+func setupPackagePath(c *types.Class) {
+	path := fmt.Sprintf("%s/%s/%s/%s", utils.GetTempDirectory(), config.BASE_PATH, GetMainPackage(c.Package), strings.ToLower(c.Name))
 	fmt.Printf("    > Creating directory: %s\n", path)
 	err := os.MkdirAll(path, 0777)
 	if err != nil {
@@ -93,7 +137,7 @@ func setupPackagePath(c types.Class) {
 		fmt.Println(err)
 	}
 }
-func getMainPackage(path string) string {
+func GetMainPackage(path string) string {
 	a := strings.Split(path, ".")
 	return strings.Join(a[3:], "/")
 }
@@ -124,19 +168,19 @@ func getControllerClassFileName(name string) string {
 	return fmt.Sprintf("%sController.java", name)
 }
 
-func getLinkerClass(c types.Class) string {
+func getLinkerClass(c *types.Class) string {
 	return getClass(c, LINKER_TEMPLATE)
 }
 
-func getCacheServiceClass(c types.Class) string {
+func getCacheServiceClass(c *types.Class) string {
 	return getClass(c, CACHE_SERVICE_TEMPLATE)
 }
 
-func getControllerClass(c types.Class) string {
+func getControllerClass(c *types.Class) string {
 	return getClass(c, CONTROLLER_TEMPLATE)
 }
 
-func getClass(c types.Class, t string) string {
+func getClass(c *types.Class, t string) string {
 	tpl := template.New("class").Funcs(funcMap)
 
 	parse, err := tpl.Parse(t)

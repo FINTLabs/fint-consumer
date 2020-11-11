@@ -1,7 +1,6 @@
 package setup
 
-const CONSTANTS_TEMPLATE = `
-package no.fint.consumer.config;
+const CONSTANTS_TEMPLATE = `package no.fint.consumer.config;
 
 public enum Constants {
 ;
@@ -11,8 +10,8 @@ public enum Constants {
     public static final String CACHE_SERVICE = "CACHE_SERVICE";
 
 {{ range $i, $model := .Models }}    
-    public static final String CACHE_INITIALDELAY_{{ ToUpper .Name }} = "${fint.consumer.cache.initialDelay.{{ .Name }}:{{ GetInitialRate $i }}}";
-    public static final String CACHE_FIXEDRATE_{{ ToUpper .Name }} = "${fint.consumer.cache.fixedRate.{{ .Name }}:900000}";
+    public static final String CACHE_INITIALDELAY_{{ ToUpper .Name }} = "${fint.consumer.cache.initialDelay.{{ ToLower .Name }}:{{ GetInitialRate $i }}}";
+    public static final String CACHE_FIXEDRATE_{{ ToUpper .Name }} = "${fint.consumer.cache.fixedRate.{{ ToLower .Name }}:900000}";
 {{end }}    
 
 }

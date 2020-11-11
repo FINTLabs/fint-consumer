@@ -1,11 +1,18 @@
 package types
 
 var JAVA_TYPE_MAP = map[string]string{
-	"string":   "String",
-	"boolean":  "boolean",
-	"date":     "Date",
-	"dateTime": "Date",
-	"double":   "double",
+	"string":      "String",
+	"boolean":     "Boolean",
+	"date":        "Date",
+	"dateTime":    "Date",
+	"float":       "Float",
+	"double":      "Double",
+	"long":        "Long",
+	"int":         "Integer",
+	"hovedklasse": "FintMainObject",
+	"referanse":   "FintReference",
+	"abstrakt":    "FintAbstractObject",
+	"datatype":    "FintComplexDatatypeObject",
 }
 
 func GetJavaType(t string) string {

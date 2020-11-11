@@ -31,7 +31,7 @@ import java.util.stream.Collectors;
 import {{ .Package }}.{{ .Name }};
 import {{ resourcePkg .Package }}.{{ .Name }}Resource;
 import {{ GetActionPackage .Package }};
-import {{ GetIdentifikatorPackage .Imports }};
+import {{ GetIdentifikatorPackage .Attributes .InheritedAttributes }};
 
 @Slf4j
 @Service

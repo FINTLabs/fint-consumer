@@ -49,7 +49,16 @@ var Commands = []cli.Command{
 		Name:   "generate",
 		Usage:  "generates consumer code",
 		Action: generate.CmdGenerate,
-		Flags:  []cli.Flag{},
+		Flags: []cli.Flag{
+			cli.StringFlag{
+				Name:  "component, c",
+				Usage: "component prefix, e.g. administrasjon",
+			},
+			cli.StringFlag{
+				Name:  "package, p",
+				Usage: "the package you want to create the consumer for, e.g. kodeverk",
+			},
+		},
 	},
 	{
 		Name:   "listPackages",
