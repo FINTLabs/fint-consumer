@@ -2,15 +2,15 @@ package utils
 
 import (
 	"fmt"
-	"io/ioutil"
 	"os"
 )
 
 func GetTempDirectory() string {
-	dir, err := ioutil.TempDir("", "fint-consumer")
+	dir := ".temp"
+	err := os.MkdirAll(dir, 0777)
 
 	if err != nil {
-		fmt.Println("Unable to create tempdir fint-consumer")
+		fmt.Println("Unable to create .temp")
 		os.Exit(2)
 	}
 
