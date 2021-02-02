@@ -10,7 +10,6 @@ import (
 
 	"github.com/FINTLabs/fint-consumer/common/utils"
 	"github.com/google/go-github/github"
-	"github.com/mitchellh/go-homedir"
 	"golang.org/x/net/context"
 	"golang.org/x/text/encoding/charmap"
 )
@@ -48,16 +47,11 @@ func downloadFile(owner string, repo string, tag string, filename string, outFil
 }
 
 func getFilePath(tag string) string {
-	homeDir, err := homedir.Dir()
-	if err != nil {
-		fmt.Println("Unable to get homedir.")
-		os.Exit(2)
-	}
-	dir := fmt.Sprintf("%s/.fint-consumer/.cache", homeDir)
-	err = os.MkdirAll(dir, 0777)
+	dir := ".cache"
+	err := os.MkdirAll(dir, 0777)
 
 	if err != nil {
-		fmt.Println("Unable to create .fint-consumer")
+		fmt.Println("Unable to create .cache")
 		os.Exit(2)
 	}
 

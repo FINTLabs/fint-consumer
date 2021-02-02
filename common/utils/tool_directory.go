@@ -2,21 +2,15 @@ package utils
 
 import (
 	"fmt"
+	"io/ioutil"
 	"os"
-	"github.com/mitchellh/go-homedir"
 )
 
 func GetTempDirectory() string {
-	homeDir, err := homedir.Dir()
-	if err != nil {
-		fmt.Println("Unable to get homedir.")
-		os.Exit(2)
-	}
-	dir := fmt.Sprintf("%s/.fint-consumer/tmp", homeDir)
-	err = os.MkdirAll(dir, 0777)
+	dir, err := ioutil.TempDir("", "fint-consumer")
 
 	if err != nil {
-		fmt.Println("Unable to create .fint-consumer")
+		fmt.Println("Unable to create tempdir fint-consumer")
 		os.Exit(2)
 	}
 
