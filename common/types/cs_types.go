@@ -21,7 +21,7 @@ var CS_VALUE_TYPES = []string{
 
 func GetCSType(t string) string {
 
-	value, ok := JSON_TYPE_MAP[strings.ToLower(att.Type)]
+	value, ok := CS_TYPE_MAP[strings.ToLower(att.Type)]
 	if ok {
 		return value
 	} else {

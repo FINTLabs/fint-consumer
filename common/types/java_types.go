@@ -17,7 +17,7 @@ var JAVA_TYPE_MAP = map[string]string{
 
 func GetJavaType(t string) string {
 
-	value, ok := JSON_TYPE_MAP[strings.ToLower(att.Type)]
+	value, ok := JAVA_TYPE_MAP[strings.ToLower(att.Type)]
 	if ok {
 		return value
 	} else {
