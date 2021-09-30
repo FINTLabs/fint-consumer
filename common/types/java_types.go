@@ -1,5 +1,7 @@
 package types
 
+import "strings"
+
 var JAVA_TYPE_MAP = map[string]string{
 	"string":      "String",
 	"boolean":     "Boolean",
@@ -17,7 +19,7 @@ var JAVA_TYPE_MAP = map[string]string{
 
 func GetJavaType(t string) string {
 
-	value, ok := JAVA_TYPE_MAP[strings.ToLower(att.Type)]
+	value, ok := JAVA_TYPE_MAP[strings.ToLower(t)]
 	if ok {
 		return value
 	} else {

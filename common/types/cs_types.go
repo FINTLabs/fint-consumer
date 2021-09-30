@@ -1,5 +1,7 @@
 package types
 
+import "strings"
+
 var CS_TYPE_MAP = map[string]string{
 	"string":   "string",
 	"boolean":  "bool",
@@ -21,7 +23,7 @@ var CS_VALUE_TYPES = []string{
 
 func GetCSType(t string) string {
 
-	value, ok := CS_TYPE_MAP[strings.ToLower(att.Type)]
+	value, ok := CS_TYPE_MAP[strings.ToLower(t)]
 	if ok {
 		return value
 	} else {
