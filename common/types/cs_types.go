@@ -4,7 +4,7 @@ var CS_TYPE_MAP = map[string]string{
 	"string":   "string",
 	"boolean":  "bool",
 	"date":     "DateTime",
-	"dateTime": "DateTime",
+	"datetime": "DateTime",
 	"double":   "double",
 }
 
@@ -21,7 +21,7 @@ var CS_VALUE_TYPES = []string{
 
 func GetCSType(t string) string {
 
-	value, ok := CS_TYPE_MAP[t]
+	value, ok := JSON_TYPE_MAP[strings.ToLower(att.Type)]
 	if ok {
 		return value
 	} else {

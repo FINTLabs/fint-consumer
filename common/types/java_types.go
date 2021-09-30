@@ -4,7 +4,7 @@ var JAVA_TYPE_MAP = map[string]string{
 	"string":      "String",
 	"boolean":     "Boolean",
 	"date":        "Date",
-	"dateTime":    "Date",
+	"datetime":    "Date",
 	"float":       "Float",
 	"double":      "Double",
 	"long":        "Long",
@@ -17,7 +17,7 @@ var JAVA_TYPE_MAP = map[string]string{
 
 func GetJavaType(t string) string {
 
-	value, ok := JAVA_TYPE_MAP[t]
+	value, ok := JSON_TYPE_MAP[strings.ToLower(att.Type)]
 	if ok {
 		return value
 	} else {
