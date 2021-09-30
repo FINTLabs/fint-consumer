@@ -32,6 +32,9 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.util.UriComponentsBuilder;
 
+import no.fint.security.access.policy.FintUserDetails;
+import org.springframework.security.core.annotation.AuthenticationPrincipal;
+
 import javax.servlet.http.HttpServletRequest;
 import java.net.UnknownHostException;
 import java.net.URI;
@@ -78,7 +81,8 @@ public class {{ .Name }}Controller {
     private SynchronousEvents synchronousEvents;
 
     @GetMapping("/last-updated")
-    public Map<String, String> getLastUpdated(@RequestHeader(name = HeaderConstants.ORG_ID, required = false) String orgId) {
+    public Map<String, String> getLastUpdated(@AuthenticationPrincipal FintUserDetails userDetails) {
+        String orgId = userDetails.getOrgId();
         if (cacheService == null) {
             throw new CacheDisabledException("{{ .Name }} cache is disabled.");
         }
@@ -90,7 +94,8 @@ public class {{ .Name }}Controller {
     }
 
     @GetMapping("/cache/size")
-    public ImmutableMap<String, Integer> getCacheSize(@RequestHeader(name = HeaderConstants.ORG_ID, required = false) String orgId) {
+    public ImmutableMap<String, Integer> getCacheSize(@AuthenticationPrincipal FintUserDetails userDetails) {
+        String orgId = userDetails.getOrgId();
         if (cacheService == null) {
             throw new CacheDisabledException("{{ .Name }} cache is disabled.");
         }
@@ -102,12 +107,13 @@ public class {{ .Name }}Controller {
 
     @GetMapping
     public {{ .Name }}Resources get{{ .Name }}(
-            @RequestHeader(name = HeaderConstants.ORG_ID, required = false) String orgId,
-            @RequestHeader(name = HeaderConstants.CLIENT, required = false) String client,
             @RequestParam(defaultValue = "0") long sinceTimeStamp,
             @RequestParam(defaultValue = "0") int size,
             @RequestParam(defaultValue = "0") int offset,
+            @AuthenticationPrincipal FintUserDetails userDetails,
             HttpServletRequest request) {
+        String client = userDetails.getUsername();
+        String orgId = userDetails.getOrgId();
         if (cacheService == null) {
             throw new CacheDisabledException("{{ .Name }} cache is disabled.");
         }
@@ -147,8 +153,9 @@ public class {{ .Name }}Controller {
     @GetMapping("/{{ ToLower $ident.Name }}/{id:.+}")
     public {{$.Name}}Resource get{{ $.Name }}By{{ ToTitle $ident.Name }}(
             @PathVariable String id,
-            @RequestHeader(name = HeaderConstants.ORG_ID, required = false) String orgId,
-            @RequestHeader(name = HeaderConstants.CLIENT, required = false) String client) throws InterruptedException {
+            @AuthenticationPrincipal FintUserDetails userDetails) throws InterruptedException {
+        String client = userDetails.getUsername();
+        String orgId = userDetails.getOrgId();
         if (props.isOverrideOrgId() || orgId == null) {
             orgId = props.getDefaultOrgId();
         }
@@ -194,19 +201,21 @@ public class {{ .Name }}Controller {
     @GetMapping("/status/{id}")
     public ResponseEntity getStatus(
             @PathVariable String id,
-            @RequestHeader(HeaderConstants.ORG_ID) String orgId,
-            @RequestHeader(HeaderConstants.CLIENT) String client) {
+            @AuthenticationPrincipal FintUserDetails userDetails) {
+        String client = userDetails.getUsername();
+        String orgId = userDetails.getOrgId();
         log.debug("/status/{} for {} from {}", id, orgId, client);
         return statusCache.handleStatusRequest(id, orgId, linker, {{.Name}}Resource.class);
     }
 
     @PostMapping
     public ResponseEntity post{{.Name}}(
-            @RequestHeader(name = HeaderConstants.ORG_ID) String orgId,
-            @RequestHeader(name = HeaderConstants.CLIENT) String client,
+            @AuthenticationPrincipal FintUserDetails userDetails,
             @RequestBody {{.Name}}Resource body,
             @RequestParam(name = "validate", required = false) boolean validate
     ) {
+        String client = userDetails.getUsername();
+        String orgId = userDetails.getOrgId();
         log.debug("post{{.Name}}, Validate: {}, OrgId: {}, Client: {}", validate, orgId, client);
         log.trace("Body: {}", body);
         linker.mapLinks(body);
@@ -225,10 +234,11 @@ public class {{ .Name }}Controller {
     @PutMapping("/{{ ToLower $ident.Name }}/{id:.+}")
     public ResponseEntity put{{ $.Name }}By{{ ToTitle $ident.Name }}(
             @PathVariable String id,
-            @RequestHeader(name = HeaderConstants.ORG_ID) String orgId,
-            @RequestHeader(name = HeaderConstants.CLIENT) String client,
+            @AuthenticationPrincipal FintUserDetails userDetails,
             @RequestBody {{$.Name}}Resource body
     ) {
+        String client = userDetails.getUsername();
+        String orgId = userDetails.getOrgId();
         log.debug("put{{$.Name}}By{{ ToTitle $ident.Name}} {}, OrgId: {}, Client: {}", id, orgId, client);
         log.trace("Body: {}", body);
         linker.mapLinks(body);
