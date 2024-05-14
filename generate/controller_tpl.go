@@ -184,7 +184,7 @@ public class {{ .Name }}Controller {
 
             fintAuditService.audit(response, Status.SENT_TO_CLIENT);
 
-            return linker.toResource({{ ToLower $.Name }});
+            return linker.mapAndResetLinks({{ ToLower $.Name }});
         }    
     }
 {{ end }}
