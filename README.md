@@ -75,7 +75,7 @@ go install github.com/FINTLabs/fint-consumer
 #### Release 
 
 ```bash
-docker build -t fint/fint-consumer:v2.5.2 .
+docker build --build-arg VERSION=2.5.2 -t fint/fint-consumer:v2.5.2 .
 ```
 
 Verfify releases:
