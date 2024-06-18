@@ -72,6 +72,18 @@ go get -d github.com/FINTLabs/fint-consumer
 go install github.com/FINTLabs/fint-consumer
 ```
 
+#### Release 
+
+```bash
+docker build -t fint/fint-consumer:v2.5.2 .
+```
+
+Verfify releases:
+```bash
+docker images | grep fint-consumer
+```
+
+
 ## Author
 
 [FINTLabs](https://fintlabs.github.io)
