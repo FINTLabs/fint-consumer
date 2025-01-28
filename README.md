@@ -49,18 +49,18 @@ The downloaded XMI file is put in the `$HOME/.fint-consumer/.cache`. If you don'
 
 ### Binaries
 
-Precompiled binaries are available as [Docker images](https://cloud.docker.com/u/fint/repository/docker/fint/fint-consumer)
+Precompiled binaries are available as a [Github Package](https://github.com/FINTLabs/fint-consumer/pkgs/container/fint-consumer)
 
 Mount the directory where you want the generated source code to be written as `/src`.
 
 Linux / MacOS:
 ```bash
-docker run -v $(pwd):/src fint/fint-consumer:2.1.0 <ARGS>
+docker run -v $(pwd):/src ghcr.io/fintlabs/fint-consumer:v2.5.3 <ARGS>
 ```
 
 Windows PowerShell:
 ```ps1
-docker run -v ${pwd}:/src fint/fint-consumer:2.1.0 <ARGS>
+docker run -v ${pwd}:/src ghcr.io/fintlabs/fint-consumer:v2.5.3 <ARGS>
 ```
 
 ### Go
@@ -74,16 +74,9 @@ go install github.com/FINTLabs/fint-consumer
 
 #### Release 
 
-```bash
-docker build --build-arg VERSION=2.5.2 -t fint/fint-consumer:v2.5.2 .
-```
-
-Verfify releases:
-```bash
-docker images | grep fint-consumer
-```
+Create new release in Github, Github Actions will push to Github Packages.
 
 
 ## Author
 
-[FINTLabs](https://fintlabs.github.io)
+[FINTLabs](https://fintlabs.no)
