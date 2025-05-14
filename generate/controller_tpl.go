@@ -143,6 +143,19 @@ public class {{ .Name }}Controller {
         return linker.toResources(resources, offset, size, cacheService.getCacheSize(orgId));
     }
 
+    @PostMapping("/$query")
+    public {{ .Name }}Resources get{{ .Name }}ByQuery(
+            @RequestHeader(name = HeaderConstants.ORG_ID, required = false)   String orgId,
+            @RequestHeader(name = HeaderConstants.CLIENT, required = false) String client,
+            @RequestParam(defaultValue = "0") long sinceTimeStamp,
+            @RequestParam(defaultValue = "0") int  size,
+            @RequestParam(defaultValue = "0") int  offset,
+            @RequestBody(required = false) String query,
+            HttpServletRequest request
+    ) throws InterruptedException {
+        return get{{ .Name }}(orgId, client, sinceTimeStamp, size, offset, query, request);
+    }
+
 {{ range $i, $ident := .Identifiers }}
     @GetMapping("/{{ ToLower $ident.Name }}/{id:.+}")
     public {{$.Name}}Resource get{{ $.Name }}By{{ ToTitle $ident.Name }}(
