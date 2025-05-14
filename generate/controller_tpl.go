@@ -4,6 +4,7 @@ const CONTROLLER_TEMPLATE = `package no.fint.consumer.models.{{ modelPkg .Packag
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.SerializationFeature;
+import com.fasterxml.jackson.core.type.TypeReference;
 import com.google.common.collect.ImmutableMap;
 import io.swagger.annotations.Api;
 import lombok.extern.slf4j.Slf4j;
@@ -20,6 +21,7 @@ import no.fint.consumer.exceptions.*;
 import no.fint.consumer.status.StatusCache;
 import no.fint.consumer.utils.EventResponses;
 import no.fint.consumer.utils.RestEndpoints;
+import no.fint.antlr.FintFilterService;
 
 import no.fint.event.model.*;
 
@@ -37,6 +39,7 @@ import java.net.UnknownHostException;
 import java.net.URI;
 
 import java.util.Map;
+import java.util.ArrayList;
 import java.util.Optional;
 import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.TimeUnit;
@@ -52,6 +55,8 @@ import {{ GetActionPackage .Package }};
 @RestController
 @RequestMapping(name = "{{ .Name }}", value = RestEndpoints.{{ ToUpper .Name }}, produces = {FintRelationsMediaType.APPLICATION_HAL_JSON_VALUE, MediaType.APPLICATION_JSON_UTF8_VALUE})
 public class {{ .Name }}Controller {
+
+    private static final String ODATA_FILTER_QUERY_OPTION = "$filter=";
 
     @Autowired(required = false)
     private {{ .Name }}CacheService cacheService;
@@ -76,6 +81,9 @@ public class {{ .Name }}Controller {
 
     @Autowired
     private SynchronousEvents synchronousEvents;
+
+    @Autowired private 
+    FintFilterService fintFilterService;
 
     @GetMapping("/last-updated")
     public Map<String, String> getLastUpdated(@RequestHeader(name = HeaderConstants.ORG_ID, required = false) String orgId) {
@@ -109,6 +117,9 @@ public class {{ .Name }}Controller {
             @RequestParam(defaultValue = "0") int offset,
             HttpServletRequest request) {
         if (cacheService == null) {
+            if (StringUtils.isNotBlank($filter)) {
+                return get{{ .Name }}ByOdataFilter(client, orgId, $filter);
+            }
             throw new CacheDisabledException("{{ .Name }} cache is disabled.");
         }
         if (props.isOverrideOrgId() || orgId == null) {
@@ -142,7 +153,7 @@ public class {{ .Name }}Controller {
 
         return linker.toResources(resources, offset, size, cacheService.getCacheSize(orgId));
     }
-
+    
     @PostMapping("/$query")
     public {{ .Name }}Resources get{{ .Name }}ByQuery(
             @RequestHeader(name = HeaderConstants.ORG_ID, required = false)   String orgId,
@@ -154,6 +165,37 @@ public class {{ .Name }}Controller {
             HttpServletRequest request
     ) throws InterruptedException {
         return get{{ .Name }}(orgId, client, sinceTimeStamp, size, offset, query, request);
+    }
+
+    private {{ .Name }}Resources get{{ .Name }}ByOdataFilter(
+        String client, String orgId, String $filter
+    ) throws InterruptedException {
+
+        if (!fintFilterService.validate($filter))
+            throw new IllegalArgumentException("OData Filter is not valid");
+    
+        if (props.isOverrideOrgId() || orgId == null) orgId = props.getDefaultOrgId();
+        if (client == null) client = props.getDefaultClient();
+    
+        Event event = new Event(
+                orgId, Constants.COMPONENT,
+                {{ GetAction .Package }}.GET_{{ ToUpper .Name }}, client);
+        event.setOperation(Operation.READ);
+        event.setQuery(ODATA_FILTER_QUERY_OPTION.concat($filter));
+    
+        BlockingQueue<Event> queue = synchronousEvents.register(event);
+        consumerEventUtil.send(event);
+    
+        Event response = EventResponses.handle(queue.poll(5, TimeUnit.MINUTES));
+        if (response.getData() == null || response.getData().isEmpty())
+            return new {{ .Name }}Resources();
+    
+        ArrayList<{{ .Name }}Resource> list = objectMapper.convertValue(
+                response.getData(),
+                new TypeReference<ArrayList<{{ .Name }}Resource>>() {});
+        fintAuditService.audit(response, Status.SENT_TO_CLIENT);
+        list.forEach(r -> linker.mapAndResetLinks(r));
+        return linker.toResources(list);
     }
 
 {{ range $i, $ident := .Identifiers }}
