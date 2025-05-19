@@ -82,8 +82,8 @@ public class {{ .Name }}Controller {
     @Autowired
     private SynchronousEvents synchronousEvents;
 
-    @Autowired private 
-    FintFilterService fintFilterService;
+    @Autowired
+    private FintFilterService fintFilterService;
 
     @GetMapping("/last-updated")
     public Map<String, String> getLastUpdated(@RequestHeader(name = HeaderConstants.ORG_ID, required = false) String orgId) {
