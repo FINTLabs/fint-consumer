@@ -115,7 +115,8 @@ public class {{ .Name }}Controller {
             @RequestParam(defaultValue = "0") long sinceTimeStamp,
             @RequestParam(defaultValue = "0") int size,
             @RequestParam(defaultValue = "0") int offset,
-            HttpServletRequest request) {
+            @RequestParam(required = false) String $filter,
+            HttpServletRequest request) throws InterruptedException {
         if (cacheService == null) {
             if (StringUtils.isNotBlank($filter)) {
                 return get{{ .Name }}ByOdataFilter(client, orgId, $filter);
@@ -170,7 +171,6 @@ public class {{ .Name }}Controller {
     private {{ .Name }}Resources get{{ .Name }}ByOdataFilter(
         String client, String orgId, String $filter
     ) throws InterruptedException {
-
         if (!fintFilterService.validate($filter))
             throw new IllegalArgumentException("OData Filter is not valid");
     
