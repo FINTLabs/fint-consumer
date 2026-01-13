@@ -16,6 +16,7 @@ import no.fint.consumer.event.ConsumerEventUtil;
 import no.fint.event.model.Event;
 import no.fint.event.model.ResponseStatus;
 import no.fint.relations.FintResourceCompatibility;
+import no.novari.fint.model.resource.FintLinks;
 
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
