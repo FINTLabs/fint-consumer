@@ -1,6 +1,6 @@
 package setup
 
-const LINKMAPPER_TEMPLATE = `package no.fint.consumer.config;
+const LINKMAPPER_TEMPLATE = `package no.novari.fint.consumer.config;
 
 import no.fint.consumer.utils.RestEndpoints;
 import java.util.Map;

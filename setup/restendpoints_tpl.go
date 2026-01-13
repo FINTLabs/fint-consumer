@@ -1,6 +1,6 @@
 package setup
 
-const RESTENDPOINTS_TEMPLATE = `package no.fint.consumer.utils;
+const RESTENDPOINTS_TEMPLATE = `package no.novari.fint.consumer.utils;
 
 public enum RestEndpoints {
     ;

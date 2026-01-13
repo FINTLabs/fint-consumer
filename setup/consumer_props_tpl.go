@@ -1,6 +1,6 @@
 package setup
 
-const CONSUMER_PROPS_TEMPLATE = `package no.fint.consumer.config;
+const CONSUMER_PROPS_TEMPLATE = `package no.novari.fint.consumer.config;
 
 import lombok.Getter;
 import org.springframework.beans.factory.annotation.Value;

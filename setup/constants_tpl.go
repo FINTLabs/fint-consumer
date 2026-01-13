@@ -1,6 +1,6 @@
 package setup
 
-const CONSTANTS_TEMPLATE = `package no.fint.consumer.config;
+const CONSTANTS_TEMPLATE = `package no.novari.fint.consumer.config;
 
 public enum Constants {
 ;

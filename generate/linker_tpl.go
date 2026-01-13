@@ -1,6 +1,6 @@
 package generate
 
-const LINKER_TEMPLATE = `package no.fint.consumer.models.{{ modelPkg .Package  }}{{ ToLower .Name }};
+const LINKER_TEMPLATE = `package no.novari.fint.consumer.models.{{ modelPkg .Package  }}{{ ToLower .Name }};
 
 import {{ resourcePkg .Package }}.{{ .Name }}Resource;
 import {{ resourcePkg .Package }}.{{ .Name }}Resources;
