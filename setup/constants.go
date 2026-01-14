@@ -47,7 +47,7 @@ func getConstantsClass(name string, models []types.Model) string {
 
 func writeConstantsFile(content string, name string) {
 	fmt.Println("  > Setup Constants.java")
-	file := fmt.Sprintf("%s/src/main/java/no/fint/consumer/config/Constants.java", getConsumerName(name))
+	file := fmt.Sprintf("%s/src/main/java/no/novari/fint/consumer/config/Constants.java", getConsumerName(name))
 	err := ioutil.WriteFile(file, []byte(content), 0777)
 	if err != nil {
 		fmt.Printf("Unable to write file: %s", err)
