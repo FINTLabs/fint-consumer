@@ -23,7 +23,7 @@ import no.fint.consumer.utils.RestEndpoints;
 
 import no.fint.event.model.*;
 
-import no.fint.relations.FintRelationsMediaType;
+import no.novari.fint.relations.FintRelationsMediaType;
 
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
