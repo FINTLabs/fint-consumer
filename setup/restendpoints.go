@@ -1,14 +1,14 @@
 package setup
 
 import (
-	"strings"
 	"bytes"
-	"text/template"
 	"fmt"
 	"io/ioutil"
+	"strings"
+	"text/template"
+
 	"github.com/FINTLabs/fint-consumer/common/types"
 )
-
 
 func getRestEndpointsClass(m []types.Model) string {
 	var funcMap = template.FuncMap{
@@ -34,7 +34,7 @@ func getRestEndpointsClass(m []types.Model) string {
 
 func writeRestEndpointsFile(content string, name string) {
 	fmt.Println("  > Setup RestEndpoints.java")
-	file := fmt.Sprintf("%s/src/main/java/no/fint/consumer/utils/RestEndpoints.java", getConsumerName(name))
+	file := fmt.Sprintf("%s/src/main/java/no/novari/fint/consumer/utils/RestEndpoints.java", getConsumerName(name))
 	err := ioutil.WriteFile(file, []byte(content), 0777)
 	if err != nil {
 		fmt.Printf("Unable to write file: %s", err)

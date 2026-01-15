@@ -44,7 +44,7 @@ func getLinkMapperClass(models []types.Model, assocs []types.Association) string
 
 func writeLinkMapperFile(content string, name string) {
 	fmt.Println("  > Setup LinkMapper.java")
-	file := fmt.Sprintf("%s/src/main/java/no/fint/consumer/config/LinkMapper.java", getConsumerName(name))
+	file := fmt.Sprintf("%s/src/main/java/no/novari/fint/consumer/config/LinkMapper.java", getConsumerName(name))
 	err := ioutil.WriteFile(file, []byte(content), 0777)
 	if err != nil {
 		fmt.Printf("Unable to write file: %s", err)

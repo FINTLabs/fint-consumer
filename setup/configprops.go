@@ -29,7 +29,7 @@ func getConsumerPropsClass(m []types.Model) string {
 func writeConsumerPropsFile(content string, name string) {
 	fmt.Println("  > Setup ConsumerProps.java")
 
-	file := fmt.Sprintf("%s/src/main/java/no/fint/consumer/config/ConsumerProps.java", getConsumerName(name))
+	file := fmt.Sprintf("%s/src/main/java/no/novari/fint/consumer/config/ConsumerProps.java", getConsumerName(name))
 	err := ioutil.WriteFile(file, []byte(content), 0777)
 	if err != nil {
 		fmt.Printf("Unable to write file: %s", err)
