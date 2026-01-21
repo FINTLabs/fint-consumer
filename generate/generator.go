@@ -48,7 +48,7 @@ var funcMap = template.FuncMap{
 	},
 	"modelPkg": func(s string) string {
 		l := strings.Split(s, ".")
-		if len(l) <= 5 {
+		if len(l) <= 6 {
 			return ""
 		}
 		return strings.Join(l[5:], ".") + "."
