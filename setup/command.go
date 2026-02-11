@@ -60,6 +60,8 @@ func CmdSetupConsumer(c *cli.Context) {
 
 	createGradleSettings(name)
 
+	updateApplicationProperties(component, pkg)
+
 	createReadme(c.App.Name, c.App.Version, tag, pkg, component, name, ref)
 
 	/*
@@ -181,6 +183,34 @@ func createGradleSettings(name string) {
 	gradleSettings := fmt.Sprintf("%s/settings.gradle", utils.GetWorkingDir(getConsumerName(name)))
 	err := ioutil.WriteFile(gradleSettings, []byte(content), 0644)
 	if err != nil {
+		log.Fatalln(err)
+	}
+}
+
+func updateApplicationProperties(component string, pkg string) {
+	appFile := fmt.Sprintf("%s/src/main/resources/application.yaml", utils.GetWorkingDir(getConsumerName(component)))
+
+	input, err := ioutil.ReadFile(appFile)
+	if err != nil {
+		log.Fatalln(err)
+	}
+
+	lines := strings.Split(string(input), "\n")
+	for i, line := range lines {
+		t := strings.TrimSpace(line)
+
+		if strings.HasPrefix(t, "domainName:") {
+			indent := line[:len(line)-len(strings.TrimLeft(line, " \t"))]
+			lines[i] = fmt.Sprintf(`%sdomainName: "%s"`, indent, component)
+		}
+		if strings.HasPrefix(t, "packageName:") {
+			indent := line[:len(line)-len(strings.TrimLeft(line, " \t"))]
+			lines[i] = fmt.Sprintf(`%spackageName: "%s"`, indent, pkg)
+		}
+	}
+
+	output := strings.Join(lines, "\n")
+	if err := ioutil.WriteFile(appFile, []byte(output), 0644); err != nil {
 		log.Fatalln(err)
 	}
 }
