@@ -13,6 +13,7 @@ import no.fint.cache.model.CacheObject;
 import no.fint.consumer.config.Constants;
 import no.fint.consumer.config.ConsumerProps;
 import no.fint.consumer.event.ConsumerEventUtil;
+import no.fint.consumer.utils.LinksCache;
 import no.fint.event.model.Event;
 import no.fint.event.model.ResponseStatus;
 import no.fint.relations.FintResourceCompatibility;
@@ -58,6 +59,8 @@ public class {{ .Name }}CacheService extends CacheService<{{ .Name }}Resource> {
     private JavaType javaType;
 
     private ObjectMapper objectMapper;
+
+    private LinksCache linksCache;
 
     public {{ .Name }}CacheService() {
         super(MODEL, {{ GetAction .Package }}.GET_ALL_{{ ToUpper .Name }}, {{ GetAction .Package }}.UPDATE_{{ ToUpper .Name }});
@@ -112,6 +115,7 @@ public class {{ .Name }}CacheService extends CacheService<{{ .Name }}Resource> {
         data.forEach(resource -> {
             linker.mapLinks(resource);
             linker.resetSelfLinks(resource);
+            linksCache.validateLinks(resource, "{{ .Name }}Resource");
         });
         if ({{ GetAction .Package }}.valueOf(event.getAction()) == {{ GetAction .Package }}.UPDATE_{{ ToUpper .Name }}) {
             if (event.getResponseStatus() == ResponseStatus.ACCEPTED || event.getResponseStatus() == ResponseStatus.CONFLICT) {
