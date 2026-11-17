@@ -46,12 +46,15 @@ var funcMap = template.FuncMap{
 	"resourcePkg": func(s string) string {
 		return strings.Replace(s, ".model.", ".model.resource.", -1)
 	},
+	// modelPkg returns the sub-package below component and package, for
+	// example "iso." for felles.kodeverk.iso. It removes JAVA_PACKAGE_BASE
+	// first, so it works for no.fint.model (v3) and no.novari.fint.model (v4).
 	"modelPkg": func(s string) string {
-		l := strings.Split(s, ".")
-		if len(l) <= 6 {
+		l := strings.Split(strings.TrimPrefix(s, config.JAVA_PACKAGE_BASE+"."), ".")
+		if len(l) <= 2 {
 			return ""
 		}
-		return strings.Join(l[5:], ".") + "."
+		return strings.Join(l[2:], ".") + "."
 	},
 }
 
@@ -137,9 +140,13 @@ func setupPackagePath(c *types.Class) {
 		fmt.Println(err)
 	}
 }
+
+// GetMainPackage returns the model package as a path, for example
+// "arkiv/noark". It removes JAVA_PACKAGE_BASE, so it works for
+// no.fint.model (v3) and no.novari.fint.model (v4).
 func GetMainPackage(path string) string {
-	a := strings.Split(path, ".")
-	return strings.Join(a[3:], "/")
+	p := strings.TrimPrefix(path, config.JAVA_PACKAGE_BASE+".")
+	return strings.Join(strings.Split(p, "."), "/")
 }
 
 func writeClassFile(content string, pkg string, name string, className string) {
